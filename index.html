@@ -1,417 +1,2968 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;900&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet"/>
-<title>Away Game — Christian Parent’s Playbook</title>
-<script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
-<script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0d0f14">
+<title>FocusScript — Author's Command Center</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body { background: #f8f9fa; font-family: 'DM Sans', system-ui, sans-serif; color: #1a1a1a; line-height: 1.6; }
-button { cursor: pointer; }
-.progress-bar { height: 10px; background: #e9ecef; border-radius: 9999px; overflow: hidden; }
-.progress-fill { height: 100%; transition: width 0.5s ease; }
-.team-card { background: #fff; border: 1px solid #dee2e6; border-radius: 16px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.06); }
-.delete-btn { background: #fee2e2; color: #ef4444; border: none; width: 32px; height: 32px; border-radius: 8px; font-size: 18px; }
+/* ── DESIGN TOKENS ── */
+:root{
+  --bg:#0d0f14;--bg2:#13151d;--bg3:#1a1d28;--bg4:#202330;
+  --border:#252836;--border2:#2f3347;--border3:#3a3f57;
+  --text:#e9e7e0;--text2:#a09faf;--text3:#5c5b72;
+  --gold:#c9a84c;--gold2:#a8893a;--gold-glow:rgba(201,168,76,.18);
+  --green:#3fb07a;--green2:#2d8a5e;--green-glow:rgba(63,176,122,.15);
+  --red:#d95454;--amber:#d9853a;--blue:#5b87d4;--purple:#9b72d4;
+  --r:10px;--rl:16px;--rx:22px;
+  --shadow:0 4px 24px rgba(0,0,0,.5);--shadow-lg:0 12px 60px rgba(0,0,0,.7);
+  --t:.2s cubic-bezier(.4,0,.2,1);
+  --font-d:'Playfair Display',Georgia,serif;
+  --font-b:'DM Sans',system-ui,sans-serif;
+  --font-m:'DM Mono',monospace;
+}
+.light{
+  --bg:#f2efe9;--bg2:#e9e5dd;--bg3:#ddd9d0;--bg4:#d3cec4;
+  --border:#c8c3b8;--border2:#b8b3a6;--border3:#a8a298;
+  --text:#1a1815;--text2:#5a5650;--text3:#9a9590;
+  --gold:#8a6820;--gold2:#6e5218;--gold-glow:rgba(138,104,32,.12);
+  --green:#1e7a4a;--green2:#145e38;--green-glow:rgba(30,122,74,.1);
+  --red:#a83030;--amber:#a8561a;--blue:#1a4ea8;--purple:#6040b0;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:16px;scroll-behavior:smooth}
+body{
+  font-family:var(--font-b);background:var(--bg);color:var(--text);
+  min-height:100vh;overflow-x:hidden;transition:background .3s,color .3s;
+}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--bg2)}
+::-webkit-scrollbar-thumb{background:var(--border3);border-radius:3px}
+
+/* ── LAYOUT ── */
+#app{display:flex;min-height:100vh}
+#sidebar{
+  width:220px;min-height:100vh;background:var(--bg2);
+  border-right:1px solid var(--border);
+  display:flex;flex-direction:column;
+  position:fixed;top:0;left:0;bottom:0;z-index:200;
+  transition:transform var(--t);
+}
+#main{margin-left:220px;flex:1;min-height:100vh;display:flex;flex-direction:column}
+#overlay-bg{
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);
+  z-index:150;backdrop-filter:blur(2px);
+}
+@media(max-width:768px){
+  #sidebar{transform:translateX(-100%);width:240px}
+  #sidebar.open{transform:none;box-shadow:var(--shadow-lg)}
+  #main{margin-left:0}
+  #overlay-bg.show{display:block}
+}
+
+/* ── SIDEBAR ── */
+.sb-logo{
+  padding:20px 18px 14px;
+  border-bottom:1px solid var(--border);
+}
+.sb-logo-title{
+  font-family:var(--font-d);font-size:1.25rem;font-weight:900;
+  color:var(--gold);letter-spacing:-.02em;line-height:1.1;
+}
+.sb-logo-sub{font-size:.65rem;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;margin-top:2px}
+.sb-book-section{padding:10px 12px;border-bottom:1px solid var(--border)}
+.sb-book-label{font-size:.65rem;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px}
+#book-select{
+  width:100%;background:var(--bg3);border:1px solid var(--border2);
+  color:var(--text);border-radius:var(--r);padding:7px 9px;
+  font-size:.78rem;font-family:var(--font-b);cursor:pointer;
+}
+.sb-add-book{
+  width:100%;margin-top:6px;background:transparent;
+  border:1px dashed var(--border3);color:var(--text3);
+  border-radius:var(--r);padding:5px;font-size:.73rem;
+  cursor:pointer;transition:all var(--t);font-family:var(--font-b);
+}
+.sb-add-book:hover{border-color:var(--gold);color:var(--gold)}
+.sb-nav{flex:1;padding:12px 0;overflow-y:auto}
+.nav-section-label{
+  font-size:.62rem;text-transform:uppercase;letter-spacing:.1em;
+  color:var(--text3);padding:10px 16px 3px;margin-top:4px;
+}
+.nav-item{
+  display:flex;align-items:center;gap:9px;
+  padding:8px 16px;cursor:pointer;border:none;
+  background:transparent;color:var(--text2);
+  font-family:var(--font-b);font-size:.83rem;
+  width:100%;text-align:left;position:relative;
+  transition:all var(--t);
+}
+.nav-item:hover{color:var(--text);background:var(--bg3)}
+.nav-item.active{color:var(--gold);background:var(--bg3);font-weight:600}
+.nav-item.active::before{
+  content:'';position:absolute;left:0;top:5px;bottom:5px;
+  width:2px;background:var(--gold);border-radius:0 2px 2px 0;
+}
+.nav-icon{width:18px;text-align:center;font-size:.95rem}
+.nav-badge{
+  margin-left:auto;background:var(--green);color:#fff;
+  font-size:.62rem;font-weight:600;padding:1px 6px;
+  border-radius:10px;min-width:18px;text-align:center;
+}
+.sb-footer{padding:14px 16px;border-top:1px solid var(--border)}
+.streak-card{
+  background:var(--bg3);border-radius:var(--r);padding:10px 12px;
+  display:flex;align-items:center;gap:10px;
+}
+.streak-flame{font-size:1.4rem}
+.streak-num{font-size:1.3rem;font-weight:700;color:var(--amber);font-family:var(--font-m)}
+.streak-lbl{font-size:.68rem;color:var(--text3)}
+
+/* ── TOPBAR ── */
+#topbar{
+  height:56px;background:var(--bg2);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:14px;padding:0 22px;
+  position:sticky;top:0;z-index:100;
+}
+#topbar .page-title{font-family:var(--font-d);font-size:1.05rem;font-weight:700;flex:1}
+#mobile-menu{
+  display:none;background:transparent;border:none;color:var(--text);
+  font-size:1.3rem;cursor:pointer;padding:4px;
+}
+@media(max-width:768px){#mobile-menu{display:block}}
+.topbar-btn{
+  background:transparent;border:1px solid var(--border2);color:var(--text2);
+  border-radius:var(--r);padding:5px 10px;font-size:.78rem;
+  cursor:pointer;font-family:var(--font-b);transition:all var(--t);
+  display:flex;align-items:center;gap:5px;
+}
+.topbar-btn:hover{color:var(--text);border-color:var(--border3)}
+
+/* ── PAGES ── */
+.page{display:none;padding:22px;max-width:1060px;margin:0 auto;animation:pg-in .2s ease}
+.page.active{display:block}
+@keyframes pg-in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* ── CARDS ── */
+.card{
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:var(--rl);padding:18px;
+  transition:border-color var(--t);
+}
+.card:hover{border-color:var(--border2)}
+.card-title{
+  font-size:.67rem;text-transform:uppercase;letter-spacing:.1em;
+  color:var(--text3);margin-bottom:12px;font-weight:600;
+}
+.card-heading{
+  font-family:var(--font-d);font-size:1.1rem;font-weight:700;
+  margin-bottom:4px;
+}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+@media(max-width:900px){.g3,.g4{grid-template-columns:1fr 1fr}}
+@media(max-width:600px){.g2,.g3,.g4{grid-template-columns:1fr}}
+
+/* ── BUTTONS ── */
+.btn{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:8px 16px;border-radius:var(--r);
+  font-family:var(--font-b);font-size:.865rem;font-weight:500;
+  cursor:pointer;border:none;transition:all var(--t);white-space:nowrap;
+}
+.btn-gold{background:var(--gold);color:#000}
+.btn-gold:hover{background:var(--gold2);transform:translateY(-1px);box-shadow:0 4px 16px var(--gold-glow)}
+.btn-ghost{background:transparent;color:var(--text2);border:1px solid var(--border2)}
+.btn-ghost:hover{color:var(--text);border-color:var(--border3);background:var(--bg3)}
+.btn-green{background:var(--green);color:#fff}
+.btn-green:hover{background:var(--green2)}
+.btn-red{background:var(--red);color:#fff}
+.btn-red:hover{background:#b83f3f}
+.btn-sm{padding:5px 10px;font-size:.78rem}
+.btn-lg{padding:11px 22px;font-size:.95rem}
+.btn-xl{padding:14px 28px;font-size:1.05rem}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none!important}
+
+/* ── FORM ELEMENTS ── */
+input,textarea,select{
+  background:var(--bg3);border:1px solid var(--border2);
+  color:var(--text);border-radius:var(--r);
+  padding:8px 11px;font-family:var(--font-b);font-size:.865rem;
+  width:100%;transition:border-color var(--t);
+}
+input:focus,textarea:focus,select:focus{
+  outline:none;border-color:var(--gold);
+  box-shadow:0 0 0 3px var(--gold-glow);
+}
+label{font-size:.78rem;color:var(--text2);margin-bottom:4px;display:block}
+.form-group{margin-bottom:13px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:500px){.form-row{grid-template-columns:1fr}}
+.hint{font-size:.72rem;color:var(--text3);margin-top:3px}
+
+/* ── PROGRESS ── */
+.pb-wrap{background:var(--bg4);border-radius:10px;height:7px;overflow:hidden}
+.pb-fill{
+  height:100%;border-radius:10px;
+  background:linear-gradient(90deg,var(--gold),var(--amber));
+  transition:width .8s cubic-bezier(.4,0,.2,1);
+}
+.pb-fill.green{background:linear-gradient(90deg,var(--green),#5dd49a)}
+.pb-fill.blue{background:linear-gradient(90deg,var(--blue),#7aa8e8)}
+
+/* ── TAGS ── */
+.tag{display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;font-size:.68rem;font-weight:600}
+.tag-ns{background:var(--bg4);color:var(--text3)}
+.tag-draft{background:rgba(91,135,212,.18);color:var(--blue)}
+.tag-revising{background:rgba(217,133,58,.18);color:var(--amber)}
+.tag-done{background:rgba(63,176,122,.18);color:var(--green)}
+
+/* ── MODALS ── */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.75);
+  backdrop-filter:blur(4px);z-index:500;
+  display:none;align-items:center;justify-content:center;padding:14px;
+}
+.modal-overlay.open{display:flex}
+.modal{
+  background:var(--bg2);border:1px solid var(--border2);
+  border-radius:var(--rx);padding:26px;
+  width:100%;max-width:500px;max-height:90vh;overflow-y:auto;
+  box-shadow:var(--shadow-lg);
+  animation:modal-in .22s cubic-bezier(.4,0,.2,1);
+}
+.modal-lg{max-width:700px}
+@keyframes modal-in{from{opacity:0;transform:scale(.94) translateY(8px)}to{opacity:1;transform:none}}
+.modal-title{font-family:var(--font-d);font-size:1.4rem;font-weight:700;margin-bottom:18px}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:18px;flex-wrap:wrap}
+
+/* ── ONBOARDING ── */
+#onboarding{
+  position:fixed;inset:0;background:var(--bg);z-index:1000;
+  display:none;align-items:center;justify-content:center;padding:16px;
+  background-image:radial-gradient(ellipse at 20% 50%,rgba(201,168,76,.06) 0%,transparent 60%),
+                   radial-gradient(ellipse at 80% 20%,rgba(63,176,122,.04) 0%,transparent 50%);
+}
+#onboarding.show{display:flex}
+.ob-box{
+  max-width:580px;width:100%;
+  background:var(--bg2);border:1px solid var(--border2);
+  border-radius:var(--rx);padding:36px;
+  box-shadow:var(--shadow-lg);
+}
+.ob-step{display:none}
+.ob-step.active{display:block;animation:pg-in .3s ease}
+.ob-brand{
+  font-family:var(--font-d);font-size:2rem;font-weight:900;
+  color:var(--gold);margin-bottom:4px;
+}
+.ob-sub{font-size:.8rem;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:28px}
+.ob-headline{font-family:var(--font-d);font-size:1.5rem;font-weight:700;margin-bottom:6px}
+.ob-desc{font-size:.865rem;color:var(--text2);margin-bottom:22px;line-height:1.5}
+.step-dots{display:flex;gap:5px;margin-bottom:24px}
+.step-dot{width:7px;height:7px;border-radius:50%;background:var(--border3);transition:all .3s}
+.step-dot.active{background:var(--gold);width:20px;border-radius:4px}
+.step-dot.done{background:var(--gold2)}
+.ob-nav{display:flex;justify-content:space-between;align-items:center;margin-top:24px}
+
+/* ── DASHBOARD ── */
+.dash-hero{
+  background:linear-gradient(135deg,var(--bg2) 0%,var(--bg3) 100%);
+  border:1px solid var(--border);border-radius:var(--rx);
+  padding:22px;margin-bottom:16px;position:relative;overflow:hidden;
+}
+.dash-hero::before{
+  content:'';position:absolute;top:-30px;right:-30px;
+  width:160px;height:160px;border-radius:50%;
+  background:radial-gradient(circle,var(--gold-glow),transparent 70%);
+  pointer-events:none;
+}
+.dash-book-title{
+  font-family:var(--font-d);font-size:1.3rem;font-style:italic;
+  color:var(--gold);margin-bottom:2px;
+}
+.dash-book-author{font-size:.78rem;color:var(--text3);margin-bottom:16px}
+.dash-stats{display:flex;gap:20px;flex-wrap:wrap}
+.dash-stat{text-align:center}
+.dash-stat-num{
+  font-family:var(--font-m);font-size:1.6rem;font-weight:500;
+  color:var(--text);
+}
+.dash-stat-lbl{font-size:.68rem;color:var(--text3);text-transform:uppercase;letter-spacing:.06em}
+.stat-divider{width:1px;background:var(--border);align-self:stretch}
+
+/* Progress ring */
+.ring-container{display:flex;align-items:center;gap:18px;margin-bottom:16px}
+.ring-wrap{position:relative;flex-shrink:0}
+#progress-ring{transform:rotate(-90deg)}
+.ring-text{
+  position:absolute;inset:0;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+}
+.ring-pct{font-family:var(--font-m);font-size:1.3rem;font-weight:500;color:var(--text)}
+.ring-pct-lbl{font-size:.62rem;color:var(--text3);text-transform:uppercase;letter-spacing:.06em}
+.ring-info{flex:1}
+.ring-title{font-family:var(--font-d);font-size:1rem;font-weight:700;margin-bottom:6px}
+
+/* Today card */
+.today-card{
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:var(--rl);padding:16px;margin-bottom:14px;
+}
+.today-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.today-label{font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;color:var(--text3)}
+.today-min-display{
+  font-family:var(--font-m);font-size:1.8rem;font-weight:500;
+  line-height:1;
+}
+.today-min-display.met{color:var(--green)}
+.today-min-display.not-met{color:var(--gold)}
+
+/* Quote */
+.quote-card{
+  background:var(--bg2);border:1px solid var(--border);
+  border-left:3px solid var(--gold);
+  border-radius:var(--rl);padding:14px 16px;margin-bottom:14px;
+}
+.quote-text{font-family:var(--font-d);font-style:italic;font-size:.95rem;color:var(--text);line-height:1.5}
+.quote-attr{font-size:.7rem;color:var(--text3);margin-top:6px}
+
+/* Checklist */
+.checklist-item{
+  display:flex;align-items:flex-start;gap:10px;padding:9px 0;
+  border-bottom:1px solid var(--border);
+}
+.checklist-item:last-child{border-bottom:none}
+.check-box{
+  width:18px;height:18px;border-radius:5px;border:2px solid var(--border3);
+  cursor:pointer;flex-shrink:0;margin-top:1px;
+  display:flex;align-items:center;justify-content:center;
+  transition:all var(--t);background:transparent;
+}
+.check-box.checked{background:var(--green);border-color:var(--green)}
+.check-box.checked::after{content:'✓';color:#fff;font-size:.7rem;font-weight:700}
+.check-text{font-size:.865rem;flex:1;line-height:1.4}
+.check-text.done{text-decoration:line-through;color:var(--text3)}
+.check-sub{font-size:.72rem;color:var(--text3);margin-top:2px}
+
+/* ── POMODORO ── */
+.pomo-container{max-width:460px;margin:0 auto;text-align:center}
+.pomo-orb-wrap{
+  width:220px;height:220px;margin:20px auto;
+  position:relative;display:flex;align-items:center;justify-content:center;
+}
+.pomo-orb{
+  width:200px;height:200px;border-radius:50%;
+  background:radial-gradient(circle at 35% 35%,var(--bg3),var(--bg));
+  border:3px solid var(--border2);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  position:relative;z-index:2;transition:all .5s;
+}
+.pomo-orb.running{
+  border-color:var(--gold);
+  box-shadow:0 0 40px var(--gold-glow),inset 0 0 30px var(--gold-glow);
+  animation:orb-pulse 4s ease-in-out infinite;
+}
+.pomo-orb.break{
+  border-color:var(--green);
+  box-shadow:0 0 40px var(--green-glow),inset 0 0 30px var(--green-glow);
+  animation:orb-pulse-green 4s ease-in-out infinite;
+}
+@keyframes orb-pulse{
+  0%,100%{box-shadow:0 0 40px var(--gold-glow),inset 0 0 30px var(--gold-glow)}
+  50%{box-shadow:0 0 80px rgba(201,168,76,.35),inset 0 0 50px rgba(201,168,76,.15)}
+}
+@keyframes orb-pulse-green{
+  0%,100%{box-shadow:0 0 40px var(--green-glow),inset 0 0 30px var(--green-glow)}
+  50%{box-shadow:0 0 80px rgba(63,176,122,.3),inset 0 0 50px rgba(63,176,122,.12)}
+}
+.pomo-time{
+  font-family:var(--font-m);font-size:2.6rem;font-weight:500;
+  color:var(--text);letter-spacing:-.02em;line-height:1;
+}
+.pomo-label{font-size:.72rem;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;margin-top:5px}
+.pomo-ring{
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  width:214px;height:214px;
+}
+.pomo-controls{display:flex;gap:10px;justify-content:center;margin:16px 0}
+.pomo-session-tag{
+  background:var(--bg3);border:1px solid var(--border2);
+  border-radius:var(--r);padding:8px 12px;
+  font-size:.8rem;color:var(--text2);margin-bottom:16px;
+  display:flex;align-items:center;gap:8px;
+}
+.pomo-history{margin-top:18px;text-align:left}
+.pomo-log-item{
+  display:flex;align-items:center;gap:8px;
+  padding:7px 0;border-bottom:1px solid var(--border);font-size:.8rem;
+}
+.pomo-dot{width:8px;height:8px;border-radius:50%;background:var(--green);flex-shrink:0}
+.pomo-dot.break{background:var(--blue)}
+
+/* ── PLANNER ── */
+.chapter-card{
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:var(--rl);padding:14px 16px;margin-bottom:10px;
+  transition:all var(--t);cursor:default;
+}
+.chapter-card:hover{border-color:var(--border2);box-shadow:var(--shadow)}
+.chapter-header{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.drag-handle{
+  color:var(--text3);cursor:grab;font-size:.9rem;flex-shrink:0;
+  padding:2px;user-select:none;
+}
+.drag-handle:active{cursor:grabbing}
+.chapter-num{
+  font-family:var(--font-m);font-size:.75rem;color:var(--text3);
+  min-width:24px;flex-shrink:0;
+}
+.chapter-title-input{
+  background:transparent;border:none;color:var(--text);
+  font-size:.9rem;font-weight:600;flex:1;padding:2px 4px;
+  border-radius:4px;
+}
+.chapter-title-input:hover{background:var(--bg3)}
+.chapter-title-input:focus{background:var(--bg3);outline:none;border:none;
+  box-shadow:0 0 0 2px var(--gold-glow)}
+.chapter-meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+.chapter-wc{font-family:var(--font-m);font-size:.78rem;color:var(--text2)}
+.chapter-wc span{color:var(--green);font-weight:500}
+.chapter-status-select{
+  background:var(--bg4);border:1px solid var(--border2);
+  color:var(--text);border-radius:6px;padding:3px 7px;font-size:.73rem;
+  width:auto;
+}
+.chapter-mini-checks{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.mini-check{
+  display:flex;align-items:center;gap:5px;
+  background:var(--bg3);border-radius:6px;padding:4px 8px;
+  font-size:.72rem;cursor:pointer;border:1px solid transparent;
+  transition:all var(--t);user-select:none;
+}
+.mini-check.done{background:var(--bg4);border-color:var(--green);color:var(--green)}
+.mini-check .mc-icon{font-size:.75rem}
+.chapter-actions{display:flex;gap:6px;margin-left:auto}
+.ch-action-btn{
+  background:transparent;border:none;color:var(--text3);
+  cursor:pointer;font-size:.85rem;padding:3px 5px;border-radius:5px;
+  transition:all var(--t);
+}
+.ch-action-btn:hover{color:var(--text);background:var(--bg4)}
+
+/* ── WRITING STUDIO ── */
+.studio-wrap{display:flex;gap:14px;height:calc(100vh - 120px)}
+.studio-tabs{
+  width:160px;flex-shrink:0;background:var(--bg2);
+  border:1px solid var(--border);border-radius:var(--rl);
+  padding:8px;overflow-y:auto;
+}
+.studio-tab{
+  display:block;width:100%;text-align:left;
+  background:transparent;border:none;color:var(--text2);
+  font-family:var(--font-b);font-size:.78rem;
+  padding:7px 9px;border-radius:var(--r);cursor:pointer;
+  transition:all var(--t);margin-bottom:2px;
+}
+.studio-tab:hover{color:var(--text);background:var(--bg3)}
+.studio-tab.active{color:var(--gold);background:var(--bg3);font-weight:600}
+.studio-tab.freewrite{color:var(--blue)}
+.studio-editor-wrap{
+  flex:1;background:var(--bg2);border:1px solid var(--border);
+  border-radius:var(--rl);display:flex;flex-direction:column;overflow:hidden;
+}
+.studio-toolbar{
+  display:flex;align-items:center;gap:8px;padding:10px 14px;
+  border-bottom:1px solid var(--border);flex-wrap:wrap;
+}
+.studio-wc{
+  font-family:var(--font-m);font-size:.78rem;color:var(--text3);
+  margin-left:auto;
+}
+#studio-editor{
+  flex:1;padding:20px 24px;font-family:var(--font-b);
+  font-size:.95rem;line-height:1.75;color:var(--text);
+  border:none;background:transparent;resize:none;outline:none;
+  overflow-y:auto;
+}
+#studio-editor:empty::before{
+  content:attr(data-placeholder);color:var(--text3);pointer-events:none;
+}
+.studio-status{
+  padding:8px 14px;border-top:1px solid var(--border);
+  display:flex;align-items:center;gap:10px;font-size:.72rem;color:var(--text3);
+}
+.autosave-dot{
+  width:6px;height:6px;border-radius:50%;background:var(--green);
+  animation:autosave-pulse 2s infinite;
+}
+@keyframes autosave-pulse{0%,100%{opacity:1}50%{opacity:.3}}
+@media(max-width:700px){
+  .studio-wrap{flex-direction:column;height:auto}
+  .studio-tabs{width:100%;display:flex;flex-wrap:wrap;gap:4px}
+  #studio-editor{min-height:300px}
+}
+
+/* ── ANALYTICS ── */
+.chart-wrap{
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:var(--rl);padding:16px;margin-bottom:14px;
+}
+canvas{max-width:100%;display:block}
+.heat-cell{
+  width:12px;height:12px;border-radius:2px;cursor:default;
+  transition:transform .15s;
+}
+.heat-cell:hover{transform:scale(1.4)}
+.heat-grid{display:flex;gap:2px;flex-wrap:wrap}
+.health-bar{
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:var(--rl);padding:16px;
+}
+.health-score-num{
+  font-family:var(--font-m);font-size:3rem;font-weight:500;
+  line-height:1;
+}
+.health-score-grade{font-size:1rem;color:var(--text3);margin-left:6px}
+
+/* ── SETTINGS ── */
+.settings-section{
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:var(--rl);padding:18px;margin-bottom:14px;
+}
+.settings-title{
+  font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;
+  color:var(--text3);margin-bottom:14px;font-weight:600;
+}
+.settings-row{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 0;border-bottom:1px solid var(--border);
+  gap:12px;
+}
+.settings-row:last-child{border-bottom:none;padding-bottom:0}
+.settings-row-label{font-size:.865rem}
+.settings-row-sub{font-size:.72rem;color:var(--text3);margin-top:1px}
+.toggle{
+  position:relative;width:40px;height:22px;flex-shrink:0;
+}
+.toggle input{opacity:0;width:0;height:0}
+.toggle-slider{
+  position:absolute;inset:0;background:var(--bg4);
+  border-radius:22px;cursor:pointer;transition:all .3s;
+}
+.toggle-slider::before{
+  content:'';position:absolute;width:16px;height:16px;
+  left:3px;bottom:3px;background:#fff;border-radius:50%;
+  transition:all .3s;
+}
+.toggle input:checked+.toggle-slider{background:var(--green)}
+.toggle input:checked+.toggle-slider::before{transform:translateX(18px)}
+
+/* ── BADGES ── */
+.badges-grid{display:flex;flex-wrap:wrap;gap:10px}
+.badge{
+  background:var(--bg3);border:1px solid var(--border2);
+  border-radius:var(--rl);padding:12px 14px;
+  display:flex;align-items:center;gap:10px;
+  transition:all var(--t);min-width:180px;
+}
+.badge.earned{
+  border-color:var(--gold2);
+  background:linear-gradient(135deg,var(--bg3),rgba(201,168,76,.08));
+}
+.badge-icon{font-size:1.6rem}
+.badge-name{font-size:.82rem;font-weight:600;color:var(--text)}
+.badge-desc{font-size:.7rem;color:var(--text3);margin-top:2px}
+.badge.locked .badge-icon{filter:grayscale(1);opacity:.4}
+.badge.locked .badge-name{color:var(--text3)}
+
+/* ── DATA WARNING BANNER ── */
+#data-warning{
+  background:rgba(217,133,58,.08);border-top:1px solid rgba(217,133,58,.25);
+  padding:8px 22px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  position:sticky;bottom:0;z-index:80;
+}
+.dw-icon{font-size:.95rem;flex-shrink:0}
+.dw-text{font-size:.73rem;color:var(--amber);line-height:1.4;flex:1}
+.dw-text strong{font-weight:600}
+.dw-btn{
+  background:var(--amber);color:#000;border:none;
+  border-radius:var(--r);padding:5px 12px;font-size:.73rem;
+  font-weight:600;cursor:pointer;font-family:var(--font-b);
+  white-space:nowrap;flex-shrink:0;
+  transition:all var(--t);
+}
+.dw-btn:hover{background:var(--gold)}
+
+/* ── TOAST ── */
+#toast-container{
+  position:fixed;bottom:70px;right:18px;z-index:9999;
+  display:flex;flex-direction:column;gap:7px;align-items:flex-end;
+}
+.toast{
+  background:var(--bg2);border:1px solid var(--border2);
+  border-radius:var(--r);padding:10px 14px;
+  font-size:.82rem;color:var(--text);
+  box-shadow:var(--shadow);max-width:280px;
+  animation:toast-in .25s ease;pointer-events:none;
+}
+.toast.success{border-left:3px solid var(--green)}
+.toast.warning{border-left:3px solid var(--amber)}
+.toast.error{border-left:3px solid var(--red)}
+@keyframes toast-in{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:none}}
+
+/* ── CONFETTI ── */
+.confetti-piece{
+  position:fixed;pointer-events:none;z-index:9998;
+  width:8px;height:8px;border-radius:2px;
+  animation:confetti-fall 3s ease forwards;
+}
+@keyframes confetti-fall{
+  0%{transform:translateY(-10px) rotate(0deg);opacity:1}
+  100%{transform:translateY(100vh) rotate(720deg);opacity:0}
+}
+
+/* ── DEADLINE WIDGET ── */
+.deadline-card{
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:var(--rl);padding:16px;margin-bottom:14px;
+}
+.deadline-ring-wrap{display:flex;align-items:center;gap:16px}
+.deadline-days-left{
+  font-family:var(--font-m);font-size:2.5rem;font-weight:500;
+}
+.deadline-days-left.urgent{color:var(--red)}
+.deadline-days-left.warn{color:var(--amber)}
+.deadline-days-left.ok{color:var(--green)}
+.deadline-meta{font-size:.75rem;color:var(--text3);margin-top:2px}
+.pace-display{
+  margin-top:10px;background:var(--bg3);border-radius:var(--r);
+  padding:10px 12px;font-size:.8rem;
+}
+.pace-num{font-family:var(--font-m);font-size:1.1rem;color:var(--gold)}
+
+/* ── BOOK SETUP EDIT ── */
+.book-info-header{
+  display:flex;align-items:flex-start;justify-content:space-between;
+  margin-bottom:14px;
+}
+.export-import-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
 </style>
 </head>
 <body>
-<div id="root"></div>
-<script type="text/babel" data-presets="react">
-const { useState } = React;
 
-// ─── STORAGE ──────────────────────────────────────────────────────────────────
-function load(key, fb) { try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : fb; } catch { return fb; } }
-function save(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch {} }
-let _c = Date.now();
-function uid() { return "x" + (++_c).toString(36); }
+<!-- ══════════════════════════════════════════
+     ONBOARDING
+══════════════════════════════════════════ -->
+<div id="onboarding">
+  <div class="ob-box">
+    <div class="ob-brand">FocusScript</div>
+    <div class="ob-sub">Author's Command Center</div>
+    <div class="step-dots" id="ob-dots"></div>
 
-// ─── COLORS ───────────────────────────────────────────────────────────────────
-const C = {
-  bg0: "#f8f9fa", bg1: "#ffffff", bg2: "#f1f3f5", bg3: "#e9ecef",
-  border: "#dee2e6", borderHi: "#ff8c00",
-  text: "#1a1a1a", textSub: "#495057", textMuted: "#6c757d",
-  orange: "#ff8c00", green: "#00b36b"
+    <!-- Step 0: Welcome -->
+    <div class="ob-step active" data-step="0">
+      <div class="ob-headline">Your book deserves to be finished.</div>
+      <div class="ob-desc">FocusScript keeps you accountable with Pomodoro sessions, word-count tracking, chapter planning, and a streak system that doesn't let you quit.</div>
+      <div class="ob-desc" style="margin-top:10px">Let's set up your first book. Takes 60 seconds.</div>
+      <div class="ob-nav"><span></span><button class="btn btn-gold btn-lg" onclick="obNext()">Let's Go →</button></div>
+    </div>
+
+    <!-- Step 1: Book basics -->
+    <div class="ob-step" data-step="1">
+      <div class="ob-headline">About Your Book</div>
+      <div class="ob-desc">Fill in what you know — you can change everything later.</div>
+      <div class="form-group">
+        <label>Book Title *</label>
+        <input type="text" id="ob-title" placeholder="e.g. The Courage Habit" maxlength="120">
+      </div>
+      <div class="form-group">
+        <label>Subtitle (optional)</label>
+        <input type="text" id="ob-subtitle" placeholder="e.g. How to Build New Habits That Actually Stick" maxlength="160">
+      </div>
+      <div class="form-group">
+        <label>Author Name</label>
+        <input type="text" id="ob-author" placeholder="Your name" maxlength="80">
+      </div>
+      <div class="ob-nav">
+        <button class="btn btn-ghost" onclick="obBack()">← Back</button>
+        <button class="btn btn-gold btn-lg" onclick="obNext()">Next →</button>
+      </div>
+    </div>
+
+    <!-- Step 2: Word goal + deadline -->
+    <div class="ob-step" data-step="2">
+      <div class="ob-headline">Word Goal & Deadline</div>
+      <div class="ob-desc">Set your target word count and when you want the manuscript done.</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Total Word Goal</label>
+          <input type="number" id="ob-wordgoal" value="50000" min="1000" max="500000" step="1000">
+          <div class="hint">Typical: 50k–80k (novel), 20k–40k (nonfiction)</div>
+        </div>
+        <div class="form-group">
+          <label>Daily Minimum (minutes)</label>
+          <input type="number" id="ob-dailymin" value="30" min="10" max="240" step="5">
+          <div class="hint">The app will nudge you until this is met</div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Target Finish Date</label>
+        <input type="date" id="ob-deadline">
+        <div class="hint">Helps calculate daily word-count pace</div>
+      </div>
+      <div class="ob-nav">
+        <button class="btn btn-ghost" onclick="obBack()">← Back</button>
+        <button class="btn btn-gold btn-lg" onclick="obNext()">Next →</button>
+      </div>
+    </div>
+
+    <!-- Step 3: Chapter skeleton -->
+    <div class="ob-step" data-step="3">
+      <div class="ob-headline">Chapter Skeleton</div>
+      <div class="ob-desc">How many chapters are you planning? We'll pre-generate cards for each. You can add, delete, or rename them any time.</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Number of Chapters</label>
+          <input type="number" id="ob-chapters" value="10" min="1" max="100">
+        </div>
+        <div class="form-group">
+          <label>Genre / Type</label>
+          <select id="ob-genre">
+            <option value="nonfiction">Nonfiction / Self-Help</option>
+            <option value="memoir">Memoir</option>
+            <option value="novel">Novel / Fiction</option>
+            <option value="business">Business</option>
+            <option value="children">Children's</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+      </div>
+      <div style="margin-bottom:14px">
+        <button class="btn btn-ghost btn-sm" onclick="previewChapters()">👁 Preview chapter titles</button>
+        <div id="ob-chapter-preview" style="margin-top:10px;font-size:.78rem;color:var(--text3);line-height:1.8"></div>
+      </div>
+      <div class="ob-nav">
+        <button class="btn btn-ghost" onclick="obBack()">← Back</button>
+        <button class="btn btn-gold btn-lg" onclick="obFinish()">Create My Book 🚀</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     MAIN APP
+══════════════════════════════════════════ -->
+<div id="app" style="display:none">
+  <div id="overlay-bg" onclick="closeSidebar()"></div>
+
+  <!-- SIDEBAR -->
+  <nav id="sidebar">
+    <div class="sb-logo">
+      <div class="sb-logo-title">FocusScript</div>
+      <div class="sb-logo-sub">Author's Command Center</div>
+    </div>
+    <div class="sb-book-section">
+      <div class="sb-book-label">Active Book</div>
+      <select id="book-select" onchange="switchBook(this.value)"></select>
+      <button class="sb-add-book" onclick="addNewBook()">＋ New Book</button>
+    </div>
+    <div class="sb-nav">
+      <div class="nav-section-label">Overview</div>
+      <button class="nav-item active" data-page="dashboard">
+        <span class="nav-icon">🏠</span>Dashboard
+      </button>
+      <button class="nav-item" data-page="planner">
+        <span class="nav-icon">📋</span>Book Planner
+      </button>
+      <button class="nav-item" data-page="deadline">
+        <span class="nav-icon">🎯</span>Timeline
+      </button>
+
+      <div class="nav-section-label">Work</div>
+      <button class="nav-item" data-page="pomodoro">
+        <span class="nav-icon">⏱</span>Pomodoro
+      </button>
+      <button class="nav-item" data-page="studio">
+        <span class="nav-icon">✍️</span>Writing Studio
+      </button>
+      <button class="nav-item" data-page="checklist">
+        <span class="nav-icon">✅</span>Daily Checklist
+        <span class="nav-badge" id="checklist-badge" style="display:none">!</span>
+      </button>
+
+      <div class="nav-section-label">Insights</div>
+      <button class="nav-item" data-page="analytics">
+        <span class="nav-icon">📊</span>Analytics
+      </button>
+      <button class="nav-item" data-page="badges">
+        <span class="nav-icon">🏆</span>Badges
+      </button>
+
+      <div class="nav-section-label">System</div>
+      <button class="nav-item" data-page="settings">
+        <span class="nav-icon">⚙️</span>Settings
+      </button>
+    </div>
+    <div class="sb-footer">
+      <div class="streak-card">
+        <div class="streak-flame">🔥</div>
+        <div class="streak-info">
+          <div class="streak-num" id="streak-display">0</div>
+          <div class="streak-lbl">day streak</div>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- MAIN CONTENT -->
+  <div id="main">
+    <div id="topbar">
+      <button id="mobile-menu" onclick="toggleSidebar()">☰</button>
+      <div class="page-title" id="topbar-title">Dashboard</div>
+      <div style="display:flex;gap:7px;align-items:center">
+        <button class="topbar-btn" onclick="openExportImport()">💾 Backup</button>
+        <button class="topbar-btn" onclick="toggleTheme()" id="theme-btn">☀️</button>
+      </div>
+    </div>
+
+    <!-- ── DASHBOARD ── -->
+    <div class="page active" id="page-dashboard">
+      <div class="dash-hero">
+        <div class="dash-book-title" id="dash-book-title">—</div>
+        <div class="dash-book-author" id="dash-book-author">—</div>
+        <div class="ring-container">
+          <div class="ring-wrap">
+            <svg class="pomo-ring" width="110" height="110" id="progress-ring">
+              <circle cx="55" cy="55" r="48" fill="none" stroke="var(--bg4)" stroke-width="8"/>
+              <circle cx="55" cy="55" r="48" fill="none" stroke="var(--gold)" stroke-width="8"
+                      stroke-linecap="round" id="ring-progress" stroke-dasharray="301.59"
+                      stroke-dashoffset="301.59" style="transition:stroke-dashoffset 1s ease"/>
+            </svg>
+            <div class="ring-text">
+              <div class="ring-pct" id="ring-pct">0%</div>
+              <div class="ring-pct-lbl">done</div>
+            </div>
+          </div>
+          <div class="ring-info">
+            <div class="ring-title" id="dash-wc-display">0 / 0 words</div>
+            <div style="font-size:.78rem;color:var(--text3);margin-bottom:8px" id="dash-ch-display">0 of 0 chapters</div>
+            <div class="pb-wrap" style="margin-bottom:6px">
+              <div class="pb-fill" id="ring-pb" style="width:0%"></div>
+            </div>
+          </div>
+        </div>
+        <div class="dash-stats" id="dash-stats">
+          <div class="dash-stat">
+            <div class="dash-stat-num" id="stat-today">0</div>
+            <div class="dash-stat-lbl">Words Today</div>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="dash-stat">
+            <div class="dash-stat-num" id="stat-avg">0</div>
+            <div class="dash-stat-lbl">Daily Avg</div>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="dash-stat">
+            <div class="dash-stat-num" id="stat-sessions">0</div>
+            <div class="dash-stat-lbl">Sessions Today</div>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="dash-stat">
+            <div class="dash-stat-num" id="stat-pace">—</div>
+            <div class="dash-stat-lbl">Days Left</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="g2" style="margin-bottom:14px">
+        <!-- Today's Promise -->
+        <div class="today-card">
+          <div class="today-header">
+            <div class="today-label">Today's Promise</div>
+            <span id="today-badge" class="tag tag-ns">Not Yet</span>
+          </div>
+          <div style="display:flex;align-items:flex-end;gap:6px;margin-bottom:10px">
+            <div class="today-min-display" id="today-min-display">0</div>
+            <div style="font-size:.78rem;color:var(--text3);margin-bottom:6px">/ <span id="today-min-goal">30</span> min</div>
+          </div>
+          <div class="pb-wrap">
+            <div class="pb-fill green" id="today-pb" style="width:0%"></div>
+          </div>
+          <div style="margin-top:12px">
+            <button class="btn btn-gold btn-lg" style="width:100%" onclick="navigate('pomodoro')">
+              ⏱ Start Focus Session
+            </button>
+          </div>
+        </div>
+
+        <!-- Deadline snapshot -->
+        <div class="today-card" id="dash-deadline-card">
+          <div class="today-label">Timeline</div>
+          <div id="dash-deadline-content">
+            <div style="color:var(--text3);font-size:.82rem;margin-top:8px">No deadline set.</div>
+            <button class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="navigate('deadline')">Set Deadline →</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quote -->
+      <div class="quote-card">
+        <div class="quote-text" id="daily-quote"></div>
+        <div class="quote-attr">— Daily Reminder</div>
+      </div>
+
+      <!-- Quick checklist -->
+      <div class="card">
+        <div class="card-title">Today's Checklist</div>
+        <div id="dash-checklist"></div>
+        <div style="margin-top:10px">
+          <button class="btn btn-ghost btn-sm" onclick="navigate('checklist')">View Full Checklist →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── PLANNER ── -->
+    <div class="page" id="page-planner">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px">
+        <div>
+          <h2 style="font-family:var(--font-d);font-size:1.4rem">Book Planner</h2>
+          <div style="font-size:.8rem;color:var(--text3)" id="planner-book-name">—</div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-ghost btn-sm" onclick="rebalanceWordCounts()">⚖️ Rebalance Words</button>
+          <button class="btn btn-gold btn-sm" onclick="addChapter()">＋ Add Chapter</button>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:14px">
+        <div class="card-title">Book Settings</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Book Title</label>
+            <input type="text" id="plan-title" onchange="updateBookMeta()">
+          </div>
+          <div class="form-group">
+            <label>Subtitle</label>
+            <input type="text" id="plan-subtitle" onchange="updateBookMeta()">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Author</label>
+            <input type="text" id="plan-author" onchange="updateBookMeta()">
+          </div>
+          <div class="form-group">
+            <label>Total Word Goal</label>
+            <input type="number" id="plan-wordgoal" min="1000" max="500000" step="1000" onchange="updateBookMeta()">
+          </div>
+        </div>
+      </div>
+
+      <div id="chapter-list"></div>
+
+      <div style="margin-top:10px;padding:12px;background:var(--bg2);border:1px dashed var(--border2);border-radius:var(--rl);text-align:center">
+        <button class="btn btn-ghost" onclick="addChapter()">＋ Add Another Chapter</button>
+      </div>
+    </div>
+
+    <!-- ── TIMELINE ── -->
+    <div class="page" id="page-deadline">
+      <h2 style="font-family:var(--font-d);font-size:1.4rem;margin-bottom:16px">Timeline & Pace</h2>
+
+      <div class="card" style="margin-bottom:14px">
+        <div class="card-title">Deadline Settings</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Manuscript Deadline</label>
+            <input type="date" id="deadline-input" onchange="saveDeadline()">
+          </div>
+          <div class="form-group">
+            <label>Daily Minimum (minutes)</label>
+            <input type="number" id="dailymin-input" value="30" min="5" max="480" step="5" onchange="saveDeadline()">
+          </div>
+        </div>
+      </div>
+
+      <div class="deadline-card" id="deadline-display" style="display:none">
+        <div class="card-title">Countdown</div>
+        <div class="deadline-ring-wrap">
+          <div>
+            <div class="deadline-days-left ok" id="days-left-num">—</div>
+            <div class="deadline-meta" id="days-left-meta">days remaining</div>
+          </div>
+          <div style="flex:1;margin-left:16px">
+            <div class="pb-wrap" style="height:12px;margin-bottom:8px">
+              <div class="pb-fill" id="deadline-pb" style="width:0%"></div>
+            </div>
+            <div style="font-size:.78rem;color:var(--text2)" id="deadline-label-text"></div>
+          </div>
+        </div>
+        <div class="pace-display" style="margin-top:12px">
+          <div style="font-size:.75rem;color:var(--text3);margin-bottom:4px">Required daily pace</div>
+          <span class="pace-num" id="required-pace">—</span>
+          <span style="font-size:.8rem;color:var(--text3)"> words/day to finish on time</span>
+        </div>
+        <div class="pace-display" style="margin-top:8px">
+          <div style="font-size:.75rem;color:var(--text3);margin-bottom:4px">Your current pace</div>
+          <span class="pace-num" id="current-pace">—</span>
+          <span style="font-size:.8rem;color:var(--text3)"> words/day (7-day average)</span>
+        </div>
+        <div id="pace-verdict" style="margin-top:10px;font-size:.82rem;border-radius:var(--r);padding:8px 12px"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Projected Finish</div>
+        <div id="projected-finish" style="font-size:.865rem;color:var(--text2)">Set a deadline and word goal to calculate.</div>
+      </div>
+    </div>
+
+    <!-- ── POMODORO ── -->
+    <div class="page" id="page-pomodoro">
+      <div class="pomo-container">
+        <h2 style="font-family:var(--font-d);font-size:1.4rem;text-align:center;margin-bottom:4px">Focus Session</h2>
+        <div style="font-size:.78rem;color:var(--text3);text-align:center;margin-bottom:16px" id="pomo-session-type">Work Block</div>
+
+        <div class="pomo-session-tag">
+          <span>📖</span>
+          <span>Writing:</span>
+          <select id="pomo-chapter-select" style="flex:1;background:transparent;border:none;color:var(--text);font-size:.82rem;width:auto">
+            <option value="freewrite">Freewrite</option>
+          </select>
+        </div>
+
+        <div class="pomo-orb-wrap">
+          <svg class="pomo-ring" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)" width="220" height="220" id="pomo-svg-ring">
+            <circle cx="110" cy="110" r="100" fill="none" stroke="var(--bg4)" stroke-width="6"/>
+            <circle cx="110" cy="110" r="100" fill="none" stroke="var(--gold)" stroke-width="6"
+                    stroke-linecap="round" id="pomo-arc" stroke-dasharray="628.32" stroke-dashoffset="0"
+                    style="transition:stroke-dashoffset .5s;transform:rotate(-90deg);transform-origin:110px 110px"/>
+          </svg>
+          <div class="pomo-orb" id="pomo-orb">
+            <div class="pomo-time" id="pomo-time">25:00</div>
+            <div class="pomo-label" id="pomo-label">ready</div>
+          </div>
+        </div>
+
+        <div class="pomo-controls">
+          <button class="btn btn-ghost" onclick="pomoPause()" id="pomo-pause-btn" disabled>⏸ Pause</button>
+          <button class="btn btn-gold btn-xl" onclick="pomoStart()" id="pomo-start-btn">▶ Start</button>
+          <button class="btn btn-ghost" onclick="pomoReset()">↺ Reset</button>
+        </div>
+
+        <div style="text-align:center;font-size:.78rem;color:var(--text3);margin-bottom:16px">
+          Session <span id="pomo-session-count" style="color:var(--gold);font-weight:600">1</span> of 4 · 
+          <span id="pomo-daily-min" style="color:var(--green)">0</span> min logged today
+        </div>
+
+        <div class="pomo-history" id="pomo-history">
+          <div class="card-title">Session Log</div>
+          <div id="pomo-log-list" style="font-size:.8rem;color:var(--text3);text-align:center;padding:12px">No sessions yet today.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── WRITING STUDIO ── -->
+    <div class="page" id="page-studio">
+      <div class="studio-wrap">
+        <div class="studio-tabs" id="studio-tabs"></div>
+        <div class="studio-editor-wrap">
+          <div class="studio-toolbar">
+            <button class="btn btn-ghost btn-sm" onclick="formatText('bold')"><b>B</b></button>
+            <button class="btn btn-ghost btn-sm" onclick="formatText('italic')"><i>I</i></button>
+            <button class="btn btn-ghost btn-sm" onclick="formatText('underline')"><u>U</u></button>
+            <button class="btn btn-ghost btn-sm" onclick="insertDash()">—</button>
+            <div style="flex:1"></div>
+            <button class="btn btn-ghost btn-sm" onclick="toggleFocusMode()" id="focus-mode-btn">⛶ Focus</button>
+            <div class="studio-wc" id="studio-wc">0 words</div>
+          </div>
+          <div id="studio-editor" contenteditable="true"
+               data-placeholder="Start writing… your cursor is waiting."
+               oninput="studioInput()" onkeydown="studioKeydown(event)"></div>
+          <div class="studio-status">
+            <div class="autosave-dot"></div>
+            <span id="autosave-status">Auto-saving…</span>
+            <span style="margin-left:auto" id="studio-chapter-label">—</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── CHECKLIST ── -->
+    <div class="page" id="page-checklist">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+        <h2 style="font-family:var(--font-d);font-size:1.4rem">Daily Checklist</h2>
+        <div style="font-size:.78rem;color:var(--text3)" id="checklist-date"></div>
+      </div>
+      <div class="card" style="margin-bottom:14px">
+        <div class="card-title">Core Goals</div>
+        <div id="core-checklist"></div>
+      </div>
+      <div class="card" style="margin-bottom:14px">
+        <div class="card-title">Book Milestones</div>
+        <div id="milestone-checklist"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Custom Tasks</div>
+        <div id="custom-checklist"></div>
+        <div style="margin-top:10px;display:flex;gap:8px">
+          <input type="text" id="custom-task-input" placeholder="Add a custom task…" style="flex:1"
+                 onkeydown="if(event.key==='Enter')addCustomTask()">
+          <button class="btn btn-ghost btn-sm" onclick="addCustomTask()">＋ Add</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── ANALYTICS ── -->
+    <div class="page" id="page-analytics">
+      <h2 style="font-family:var(--font-d);font-size:1.4rem;margin-bottom:16px">Analytics</h2>
+
+      <div class="g2" style="margin-bottom:14px">
+        <div class="health-bar">
+          <div class="card-title">Book Health Score</div>
+          <div style="display:flex;align-items:baseline;gap:6px">
+            <div class="health-score-num" id="health-score">—</div>
+            <div class="health-score-grade" id="health-grade">/100</div>
+          </div>
+          <div style="font-size:.78rem;color:var(--text3);margin-top:4px" id="health-verdict">—</div>
+          <div class="pb-wrap" style="margin-top:10px">
+            <div class="pb-fill green" id="health-pb" style="width:0%"></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">All-Time Stats</div>
+          <div id="alltime-stats" style="font-size:.85rem;display:flex;flex-direction:column;gap:6px"></div>
+        </div>
+      </div>
+
+      <div class="chart-wrap" style="margin-bottom:14px">
+        <div class="card-title">Daily Word Output (last 14 days)</div>
+        <canvas id="chart-daily" height="120"></canvas>
+      </div>
+      <div class="chart-wrap" style="margin-bottom:14px">
+        <div class="card-title">Cumulative Words</div>
+        <canvas id="chart-cumulative" height="100"></canvas>
+      </div>
+      <div class="chart-wrap">
+        <div class="card-title">Writing Calendar (last 90 days)</div>
+        <div id="heat-map" class="heat-grid" style="gap:3px"></div>
+        <div style="display:flex;gap:6px;align-items:center;margin-top:10px;font-size:.7rem;color:var(--text3)">
+          <span>Less</span>
+          <div style="width:10px;height:10px;border-radius:2px;background:var(--bg4)"></div>
+          <div style="width:10px;height:10px;border-radius:2px;background:rgba(201,168,76,.3)"></div>
+          <div style="width:10px;height:10px;border-radius:2px;background:rgba(201,168,76,.6)"></div>
+          <div style="width:10px;height:10px;border-radius:2px;background:var(--gold)"></div>
+          <span>More</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── BADGES ── -->
+    <div class="page" id="page-badges">
+      <h2 style="font-family:var(--font-d);font-size:1.4rem;margin-bottom:16px">Your Badges</h2>
+      <div class="badges-grid" id="badges-grid"></div>
+    </div>
+
+    <!-- ── SETTINGS ── -->
+    <div class="page" id="page-settings">
+      <h2 style="font-family:var(--font-d);font-size:1.4rem;margin-bottom:16px">Settings</h2>
+
+      <div class="settings-section">
+        <div class="settings-title">Pomodoro Timer</div>
+        <div class="settings-row">
+          <div><div class="settings-row-label">Work Block Duration</div>
+          <div class="settings-row-sub">Minutes per focus session</div></div>
+          <input type="number" id="set-work-min" value="25" min="5" max="90" step="5"
+                 style="width:70px" onchange="saveSettings()">
+        </div>
+        <div class="settings-row">
+          <div><div class="settings-row-label">Break Duration</div>
+          <div class="settings-row-sub">Short break after each session</div></div>
+          <input type="number" id="set-break-min" value="5" min="1" max="30" step="1"
+                 style="width:70px" onchange="saveSettings()">
+        </div>
+        <div class="settings-row">
+          <div><div class="settings-row-label">Long Break Every N Sessions</div>
+          <div class="settings-row-sub">0 = disabled</div></div>
+          <input type="number" id="set-long-break-every" value="4" min="0" max="10"
+                 style="width:70px" onchange="saveSettings()">
+        </div>
+        <div class="settings-row">
+          <div><div class="settings-row-label">Long Break Duration</div></div>
+          <input type="number" id="set-long-break-min" value="15" min="5" max="60" step="5"
+                 style="width:70px" onchange="saveSettings()">
+        </div>
+        <div class="settings-row">
+          <div><div class="settings-row-label">Tick Sound</div>
+          <div class="settings-row-sub">Soft metronome during session</div></div>
+          <label class="toggle"><input type="checkbox" id="set-tick" checked onchange="saveSettings()">
+            <span class="toggle-slider"></span></label>
+        </div>
+        <div class="settings-row">
+          <div><div class="settings-row-label">Auto-start Break</div>
+          <div class="settings-row-sub">Automatically begin break when work ends</div></div>
+          <label class="toggle"><input type="checkbox" id="set-autobreak" onchange="saveSettings()">
+            <span class="toggle-slider"></span></label>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <div class="settings-title">App</div>
+        <div class="settings-row">
+          <div><div class="settings-row-label">Theme</div>
+          <div class="settings-row-sub">Light or dark mode</div></div>
+          <button class="btn btn-ghost btn-sm" onclick="toggleTheme()">Toggle</button>
+        </div>
+        <div class="settings-row">
+          <div><div class="settings-row-label">Browser Notifications</div>
+          <div class="settings-row-sub">Reminders to write each day</div></div>
+          <button class="btn btn-ghost btn-sm" onclick="requestNotifPerms()">Enable</button>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <div class="settings-title">Data — Backup & Restore</div>
+        <div style="font-size:.82rem;color:var(--text2);margin-bottom:14px;line-height:1.6">
+          All your data lives in your browser's localStorage. Export a backup regularly — especially before clearing your browser cache.
+        </div>
+        <div class="export-import-row">
+          <button class="btn btn-gold" onclick="exportAllData()">⬇ Export All Books (JSON)</button>
+          <button class="btn btn-ghost" onclick="triggerImport()">⬆ Import Backup</button>
+          <button class="btn btn-red btn-sm" onclick="confirmReset()">🗑 Reset All Data</button>
+        </div>
+        <input type="file" id="import-file" accept=".json" style="display:none" onchange="importData(event)">
+      </div>
+    </div>
+
+    <!-- DATA WARNING BANNER -->
+    <div id="data-warning">
+      <div class="dw-icon">⚠️</div>
+      <div class="dw-text">
+        <strong>Your data is stored locally in this browser.</strong>
+        Clearing your browser cache or switching devices will erase everything.
+        Export a backup regularly using the <strong>💾 Backup</strong> button above.
+      </div>
+      <button class="dw-btn" onclick="exportAllData()">Export Now</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     MODALS
+══════════════════════════════════════════ -->
+
+<!-- Export/Import Modal -->
+<div class="modal-overlay" id="modal-exportimport">
+  <div class="modal">
+    <div class="modal-title">💾 Backup & Restore</div>
+    <div style="background:rgba(217,133,58,.1);border:1px solid rgba(217,133,58,.3);border-radius:var(--r);padding:12px;margin-bottom:16px;font-size:.82rem;color:var(--amber);line-height:1.6">
+      ⚠️ <strong>Important:</strong> FocusScript stores all data in your browser's localStorage. This data will be permanently lost if you clear your browser cache, switch browsers, or use a private/incognito window. <strong>Export a backup now and store it somewhere safe.</strong>
+    </div>
+    <div class="form-group">
+      <label>Export All Books</label>
+      <div style="font-size:.78rem;color:var(--text3);margin-bottom:8px">Downloads a .json file containing all your books, chapters, writing, sessions, and settings.</div>
+      <button class="btn btn-gold" style="width:100%" onclick="exportAllData()">⬇ Download Backup (.json)</button>
+    </div>
+    <div class="form-group">
+      <label>Import Backup</label>
+      <div style="font-size:.78rem;color:var(--text3);margin-bottom:8px">Restore from a previously exported .json file. This will <strong>merge</strong> with existing data.</div>
+      <button class="btn btn-ghost" style="width:100%" onclick="triggerImport()">⬆ Choose Backup File</button>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-exportimport')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Book Modal -->
+<div class="modal-overlay" id="modal-addbook">
+  <div class="modal">
+    <div class="modal-title">New Book</div>
+    <div class="form-group"><label>Book Title *</label><input type="text" id="nb-title" placeholder="Your book title"></div>
+    <div class="form-group"><label>Subtitle</label><input type="text" id="nb-subtitle" placeholder="Optional subtitle"></div>
+    <div class="form-group"><label>Author</label><input type="text" id="nb-author"></div>
+    <div class="form-row">
+      <div class="form-group"><label>Word Goal</label><input type="number" id="nb-wordgoal" value="50000" min="1000" step="1000"></div>
+      <div class="form-group"><label>Chapters</label><input type="number" id="nb-chapters" value="10" min="1" max="100"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Genre</label>
+        <select id="nb-genre">
+          <option value="nonfiction">Nonfiction</option>
+          <option value="memoir">Memoir</option>
+          <option value="novel">Novel</option>
+          <option value="business">Business</option>
+          <option value="children">Children's</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Deadline</label><input type="date" id="nb-deadline"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-addbook')">Cancel</button>
+      <button class="btn btn-gold" onclick="createBook()">Create Book</button>
+    </div>
+  </div>
+</div>
+
+<!-- Reset Confirm -->
+<div class="modal-overlay" id="modal-reset">
+  <div class="modal">
+    <div class="modal-title">⚠️ Reset All Data</div>
+    <div style="font-size:.865rem;color:var(--text2);margin-bottom:16px;line-height:1.6">
+      This will permanently delete <strong>all books, chapters, writing, sessions, and settings.</strong>
+      This cannot be undone. Export a backup first if you want to keep your data.
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-reset')">Cancel</button>
+      <button class="btn btn-ghost" onclick="exportAllData()">Export First</button>
+      <button class="btn btn-red" onclick="resetAllData()">Yes, Delete Everything</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast container -->
+<div id="toast-container"></div>
+<input type="file" id="import-file" accept=".json" style="display:none" onchange="importData(event)">
+
+<!-- ══════════════════════════════════════════
+     JAVASCRIPT
+══════════════════════════════════════════ -->
+<script>
+// ═══════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════
+let state = {
+  books: [],
+  activeBookId: null,
+  settings: {
+    workMin: 25, breakMin: 5, longBreakEvery: 4, longBreakMin: 15,
+    tick: true, autoBreak: false, theme: 'dark'
+  },
+  today: dateStr(new Date()),
+  dailySessions: {}, // date -> [{chapter, minutes, words, ts}]
+  dailyWords: {},    // date -> words written that day (across all books)
+  badges: {}
 };
 
-// ─── VIRTUES (Complete) ───────────────────────────────────────────────────────
-const VIRTUES = {
-  L: { key:"L", label:"Love", icon:"❤️", tagline:"Others-first in a me-first culture", color:"#ff4d4d", bg:"#fff0f0", border:"#ff8c00",
-       scoreMeaning: "0=Never • 1=Rarely • 2=Sometimes • 3=Consistently puts others first",
-       strong: ["Celebrates teammates' success", "Shows genuine kindness", "Puts team above self"],
-       weak:   ["Selfish on and off the field", "Dismisses or ignores teammates", "Only cheers for own highlights"],
-       develop: ["After each game, name one teammate who helped you win", "Do one act of encouragement before you leave the field", "Pray: 'Lord, help me love my teammates the way You love me'"] },
-  P: { key:"P", label:"Peace", icon:"☮️", tagline:"Calm anchored in Christ", color:"#00b36b", bg:"#f0fff4", border:"#ff8c00",
-       scoreMeaning: "0=Constant anxiety • 1=Occasional calm • 2=Usually calm • 3=Peace that guards the heart",
-       strong: ["Stays composed under pressure", "Calms teammates in tense moments", "Bounces back quickly from mistakes"],
-       weak:   ["Anxious or panicked when things go wrong", "Spreads tension to teammates", "Dwells on errors during play"],
-       develop: ["Practice three slow breaths before any big moment", "Write down one worry this week and give it to God in prayer", "Memorize Phil. 4:7 — let it anchor your pregame routine"] },
-  S: { key:"S", label:"Self-Control", icon:"🛡️", tagline:"Responding instead of reacting", color:"#0077cc", bg:"#f0f8ff", border:"#ff8c00",
-       scoreMeaning: "0=Frequent outbursts • 1=Improving • 2=Usually controlled • 3=Strong self-discipline",
-       strong: ["Responds to bad calls without blowing up", "Keeps emotions in check under provocation", "Leads by example in discipline"],
-       weak:   ["Frequent outbursts or meltdowns", "Argues with officials or coaches", "Lets frustration hurt performance"],
-       develop: ["Identify your #1 trigger — name it, then make a plan for it", "After a bad call, count to 5 before you react", "Ask a trusted teammate to hold you accountable this week"] },
-  G: { key:"G", label:"Gentleness", icon:"🌿", tagline:"Strength under control", color:"#9c4dff", bg:"#f8f0ff", border:"#ff8c00",
-       scoreMeaning: "0=Often harsh • 1=Sometimes gentle • 2=Usually gentle • 3=Strength under control",
-       strong: ["Encourages struggling teammates", "Competes hard without being cruel", "Uses words that build up, not tear down"],
-       weak:   ["Often harsh or cutting with words", "Intimidates or belittles others", "Confuses meanness with toughness"],
-       develop: ["Before criticizing a teammate, ask: 'Is this kind AND true?'", "Find one struggling player this week and intentionally encourage them", "Journal: where did strength AND gentleness show up together today?"] },
-  H: { key:"H", label:"Humility", icon:"🙏", tagline:"Playing from identity, not for identity", color:"#ff8c00", bg:"#fff8f0", border:"#ff8c00",
-       scoreMeaning: "0=Very prideful • 1=Occasional humility • 2=Growing humility • 3=Consistently humble",
-       strong: ["Credits teammates and coaches for success", "Accepts coaching without defensiveness", "Secure enough to celebrate others"],
-       weak:   ["Takes credit, deflects blame", "Gets defensive when corrected", "Needs to be the star"],
-       develop: ["After your next win, publicly credit two specific teammates", "When corrected by a coach, respond: 'Thank you, I'll work on that'", "Ask yourself: 'Am I playing TO prove something or FROM knowing who I am?'"] },
-  Gr: { key:"Gr", label:"Gratitude", icon:"🙌", tagline:"Thankful in all circumstances", color:"#ffaa00", bg:"#fffdf0", border:"#ff8c00",
-       scoreMeaning: "0=Very entitled • 1=Occasional thanks • 2=Usually grateful • 3=Thankful in all circumstances",
-       strong: ["Thanks coaches, officials, and opponents", "Grateful for the opportunity to compete", "Positive attitude win or lose"],
-       weak:   ["Entitled attitude about playing time or roles", "Rarely thanks others", "Complains about conditions, calls, or teammates"],
-       develop: ["Start every practice with one thing you're grateful for about this team", "Write a one-line thank-you to a coach or teammate this week", "After a loss, find three genuine things to be thankful for before you leave"] },
-  J: { key:"J", label:"Joy", icon:"🎉", tagline:"Delight that outlasts the score", color:"#ff6600", bg:"#fff4f0", border:"#ff8c00",
-       scoreMeaning: "0=Joy is gone • 1=Rare joy • 2=Usually joyful • 3=Consistent delight",
-       strong: ["Genuine enjoyment of the game", "Joy that doesn't depend on the scoreboard", "Lifts the energy of those around them"],
-       weak:   ["Only happy when winning", "Drains team energy with negativity", "Has lost the love of the game"],
-       develop: ["Recall why you first fell in love with this sport — write it down", "Find one moment in each practice to just enjoy the game", "Remind yourself: the scoreboard is temporary, but who you're becoming is not"] }
-};
+function dateStr(d){ return d.toISOString().split('T')[0]; }
+function nowStr(){ return dateStr(new Date()); }
 
-const SCORE_LABELS = ["Missing", "Emerging", "Developing", "Strong"];
+// ═══════════════════════════════════════════════════════
+// PERSISTENCE
+// ═══════════════════════════════════════════════════════
+const LS_KEY = 'focusscript_v2';
 
-// ─── HELPERS ──────────────────────────────────────────────────────────────────
-function getCombo(scores) {
-  const strong = Object.values(scores).filter(v => v === 3).length;
-  const developing = Object.values(scores).filter(v => v >= 2).length;
-  const avg = (Object.values(scores).reduce((a,b) => a + b, 0) / 7).toFixed(1);
-
-  if (strong >= 5) return { label: "Kingdom Competitor", icon: "🏆", desc: `Avg ${avg}/3`, color: C.orange, progress: 95 };
-  if (developing >= 6) return { label: "Strong Disciple", icon: "🌟", desc: `Avg ${avg}/3`, color: C.green, progress: 85 };
-  return { label: "Developing Disciple", icon: "🌱", desc: `Avg ${avg}/3`, color: "#fd7e14", progress: Math.round(developing / 7 * 100) };
+function saveState(){
+  try{ localStorage.setItem(LS_KEY, JSON.stringify(state)); }
+  catch(e){ showToast('Storage full — export a backup!','warning'); }
 }
 
-function calculateTeamProgress(athletes) {
-  if (athletes.length === 0) return { avgScore: "0.0", strongPercent: 0, totalAthletes: 0 };
-  let totalScore = 0, totalStrong = 0;
-  const totalVirtues = athletes.length * 7;
+function loadState(){
+  try{
+    const raw = localStorage.getItem(LS_KEY);
+    if(raw){ state = Object.assign(state, JSON.parse(raw)); }
+  }catch(e){ console.warn('Load error',e); }
+}
 
-  athletes.forEach(a => {
-    const scores = Object.values(a.scores || {});
-    totalScore += scores.reduce((a,b) => a + b, 0);
-    totalStrong += scores.filter(v => v === 3).length;
+// ═══════════════════════════════════════════════════════
+// ONBOARDING
+// ═══════════════════════════════════════════════════════
+let obStep = 0;
+const OB_STEPS = 4;
+
+const CHAPTER_TEMPLATES = {
+  nonfiction:['Introduction: Why This Matters','The Myth We\'ve Been Sold','The Problem Nobody Talks About','What the Research Actually Says','A Framework That Changes Everything','Putting It Into Practice','Common Pitfalls (and How to Avoid Them)','Case Studies: Real People, Real Results','The Long Game','Conclusion: Your New Starting Line'],
+  memoir:['Before Everything Changed','The Family I Came From','A Childhood Lesson I Didn\'t Ask For','When the Bottom Fell Out','Searching','The Unexpected Teacher','Rock Bottom as Foundation','Learning to Walk Again','Who I Became','What I Carry With Me'],
+  novel:['Chapter 1','Chapter 2','Chapter 3','Chapter 4','Chapter 5','Chapter 6','Chapter 7','Chapter 8','Chapter 9','Chapter 10'],
+  business:['The Problem With How We Work','A New Mental Model','Diagnosing Your Situation','The Core Framework','Tool 1','Tool 2','Tool 3','Leading Your Team Through Change','Measuring What Matters','Building for the Long Haul'],
+  children:['The Big Surprise','Making a New Friend','When Things Go Wrong','Asking for Help','Trying Something Hard','The Mistake','Making It Right','A New Idea','Working Together','Happily Ever After'],
+  other:['Chapter 1','Chapter 2','Chapter 3','Chapter 4','Chapter 5','Chapter 6','Chapter 7','Chapter 8','Chapter 9','Chapter 10']
+};
+
+const QUOTES = [
+  "A page a day is a book a year. Don't negotiate with momentum.",
+  "You don't write because you feel inspired. You feel inspired because you wrote.",
+  "The first draft is just you telling the story to yourself.",
+  "Discipline is choosing between what you want now and what you want most.",
+  "Every word you write today is a word you don't have to write tomorrow.",
+  "The blank page is not your enemy. Waiting for the right mood is.",
+  "Writers write. Everyone else is just planning to.",
+  "You can always edit a bad page. You can't edit a blank one.",
+  "Your book exists. It's just waiting for you to type it out.",
+  "30 minutes of writing beats 3 hours of thinking about writing.",
+  "The hardest part of writing is the sitting down. Everything else follows.",
+  "Done is better than perfect. Perfect never ships.",
+  "Your future readers deserve the book you're afraid to finish.",
+  "Trust the process. The process is: sit down and write.",
+  "Write the book you needed to read. Someone is waiting for it."
+];
+
+function initOnboarding(){
+  updateObDots();
+  // Set default deadline 6 months out
+  const d = new Date(); d.setMonth(d.getMonth()+6);
+  document.getElementById('ob-deadline').value = dateStr(d);
+}
+
+function updateObDots(){
+  const container = document.getElementById('ob-dots');
+  container.innerHTML = '';
+  for(let i=0;i<OB_STEPS;i++){
+    const dot = document.createElement('div');
+    dot.className = 'step-dot'+(i===obStep?' active':i<obStep?' done':'');
+    container.appendChild(dot);
+  }
+}
+
+function obNext(){
+  if(obStep===1){
+    const t = document.getElementById('ob-title').value.trim();
+    if(!t){showToast('Please enter a book title','warning');return;}
+  }
+  obStep = Math.min(obStep+1, OB_STEPS-1);
+  document.querySelectorAll('.ob-step').forEach((el,i)=>{
+    el.classList.toggle('active',i===obStep);
+  });
+  updateObDots();
+}
+function obBack(){
+  obStep = Math.max(obStep-1,0);
+  document.querySelectorAll('.ob-step').forEach((el,i)=>{
+    el.classList.toggle('active',i===obStep);
+  });
+  updateObDots();
+}
+
+function previewChapters(){
+  const n = parseInt(document.getElementById('ob-chapters').value)||10;
+  const genre = document.getElementById('ob-genre').value;
+  const templates = CHAPTER_TEMPLATES[genre]||CHAPTER_TEMPLATES.other;
+  let html = '';
+  for(let i=0;i<n;i++){
+    html += `<div>${i+1}. ${templates[i]||`Chapter ${i+1}`}</div>`;
+  }
+  document.getElementById('ob-chapter-preview').innerHTML = html;
+}
+
+function obFinish(){
+  const title = document.getElementById('ob-title').value.trim()||'Untitled Book';
+  const subtitle = document.getElementById('ob-subtitle').value.trim();
+  const author = document.getElementById('ob-author').value.trim();
+  const wordGoal = parseInt(document.getElementById('ob-wordgoal').value)||50000;
+  const deadline = document.getElementById('ob-deadline').value;
+  const numChapters = parseInt(document.getElementById('ob-chapters').value)||10;
+  const genre = document.getElementById('ob-genre').value;
+  const dailyMin = parseInt(document.getElementById('ob-dailymin').value)||30;
+
+  const book = createBookObject(title, subtitle, author, wordGoal, numChapters, genre, deadline, dailyMin);
+  state.books.push(book);
+  state.activeBookId = book.id;
+  saveState();
+
+  document.getElementById('onboarding').classList.remove('show');
+  document.getElementById('app').style.display='flex';
+  initApp();
+  showToast(`"${title}" created! Let's write. 🚀`,'success');
+}
+
+function createBookObject(title, subtitle, author, wordGoal, numChapters, genre, deadline, dailyMin){
+  const templates = CHAPTER_TEMPLATES[genre]||CHAPTER_TEMPLATES.other;
+  const wordsPerChapter = Math.round(wordGoal/numChapters);
+  const chapters = [];
+  for(let i=0;i<numChapters;i++){
+    chapters.push({
+      id: uid(), num: i+1,
+      title: templates[i]||`Chapter ${i+1}`,
+      targetWords: wordsPerChapter,
+      wordsWritten: 0,
+      status: 'notstarted',
+      checks: {outline:false, draft:false, selfEdit:false},
+      content: '',
+      notes: ''
+    });
+  }
+  return {
+    id: uid(),
+    title, subtitle, author, wordGoal,
+    genre: genre||'other',
+    deadline: deadline||'',
+    dailyMin: dailyMin||30,
+    chapters,
+    sessions: [],     // {date, minutes, chapter, words}
+    customTasks: [],
+    checklistState: {},  // date -> {task:bool}
+    wordHistory: {},     // date -> words
+    createdAt: new Date().toISOString()
+  };
+}
+
+// ═══════════════════════════════════════════════════════
+// APP INIT
+// ═══════════════════════════════════════════════════════
+function uid(){ return Math.random().toString(36).slice(2,10); }
+
+function activeBook(){
+  return state.books.find(b=>b.id===state.activeBookId)||state.books[0]||null;
+}
+
+function initApp(){
+  applyTheme();
+  buildBookSelect();
+  buildNav();
+  updateStreakDisplay();
+  navigate('dashboard');
+  buildStudioTabs();
+  buildPomoChapterSelect();
+  loadSettings();
+  setInterval(autosaveStudio, 10000);
+  setInterval(updateTodayTimer, 60000);
+  const today = nowStr();
+  state.today = today;
+}
+
+function buildBookSelect(){
+  const sel = document.getElementById('book-select');
+  sel.innerHTML = state.books.map(b=>
+    `<option value="${b.id}" ${b.id===state.activeBookId?'selected':''}>${b.title}</option>`
+  ).join('');
+}
+
+function switchBook(id){
+  state.activeBookId = id;
+  saveState();
+  refreshAllPages();
+  showToast('Switched book','success');
+}
+
+function addNewBook(){
+  document.getElementById('nb-title').value='';
+  document.getElementById('nb-subtitle').value='';
+  document.getElementById('nb-author').value='';
+  document.getElementById('nb-wordgoal').value='50000';
+  document.getElementById('nb-chapters').value='10';
+  const d=new Date();d.setMonth(d.getMonth()+6);
+  document.getElementById('nb-deadline').value=dateStr(d);
+  openModal('modal-addbook');
+}
+
+function createBook(){
+  const title = document.getElementById('nb-title').value.trim();
+  if(!title){showToast('Book needs a title','warning');return;}
+  const book = createBookObject(
+    title,
+    document.getElementById('nb-subtitle').value.trim(),
+    document.getElementById('nb-author').value.trim(),
+    parseInt(document.getElementById('nb-wordgoal').value)||50000,
+    parseInt(document.getElementById('nb-chapters').value)||10,
+    document.getElementById('nb-genre').value,
+    document.getElementById('nb-deadline').value,
+    30
+  );
+  state.books.push(book);
+  state.activeBookId = book.id;
+  saveState();
+  buildBookSelect();
+  refreshAllPages();
+  closeModal('modal-addbook');
+  showToast(`"${title}" created!`,'success');
+}
+
+function buildNav(){
+  document.querySelectorAll('.nav-item').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      navigate(btn.dataset.page);
+      if(window.innerWidth<=768) closeSidebar();
+    });
+  });
+}
+
+function navigate(page){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
+  const pageEl = document.getElementById('page-'+page);
+  if(pageEl) pageEl.classList.add('active');
+  const navEl = document.querySelector(`.nav-item[data-page="${page}"]`);
+  if(navEl) navEl.classList.add('active');
+  const titles = {
+    dashboard:'Dashboard', planner:'Book Planner', deadline:'Timeline',
+    pomodoro:'Pomodoro', studio:'Writing Studio', checklist:'Daily Checklist',
+    analytics:'Analytics', badges:'Badges', settings:'Settings'
+  };
+  document.getElementById('topbar-title').textContent = titles[page]||page;
+  refreshPage(page);
+}
+
+function refreshPage(page){
+  const b = activeBook();
+  if(!b) return;
+  switch(page){
+    case 'dashboard': refreshDashboard(); break;
+    case 'planner':   refreshPlanner();   break;
+    case 'deadline':  refreshDeadline();  break;
+    case 'pomodoro':  refreshPomo();      break;
+    case 'studio':    buildStudioTabs();  break;
+    case 'checklist': refreshChecklist(); break;
+    case 'analytics': refreshAnalytics(); break;
+    case 'badges':    refreshBadges();    break;
+    case 'settings':  loadSettings();     break;
+  }
+}
+
+function refreshAllPages(){
+  buildBookSelect();
+  refreshDashboard();
+  refreshPlanner();
+  refreshDeadline();
+  buildStudioTabs();
+  buildPomoChapterSelect();
+  updateStreakDisplay();
+}
+
+// ═══════════════════════════════════════════════════════
+// DASHBOARD
+// ═══════════════════════════════════════════════════════
+function refreshDashboard(){
+  const b = activeBook(); if(!b) return;
+
+  document.getElementById('dash-book-title').textContent = b.title;
+  document.getElementById('dash-book-author').textContent =
+    [b.subtitle, b.author?`by ${b.author}`:null].filter(Boolean).join(' · ')||'';
+
+  const totalWritten = b.chapters.reduce((s,c)=>s+c.wordsWritten,0);
+  const pct = b.wordGoal>0?Math.min(100,Math.round(totalWritten/b.wordGoal*100)):0;
+  document.getElementById('ring-pct').textContent = pct+'%';
+  document.getElementById('dash-wc-display').textContent =
+    `${totalWritten.toLocaleString()} / ${b.wordGoal.toLocaleString()} words`;
+  const doneChapters = b.chapters.filter(c=>c.status==='done').length;
+  document.getElementById('dash-ch-display').textContent =
+    `${doneChapters} of ${b.chapters.length} chapters complete`;
+
+  const circ = 2*Math.PI*48;
+  const offset = circ - (pct/100)*circ;
+  document.getElementById('ring-progress').style.strokeDashoffset = offset;
+  document.getElementById('ring-pb').style.width = pct+'%';
+
+  // Stats
+  const today = nowStr();
+  const todaySessions = (b.sessions||[]).filter(s=>s.date===today);
+  const todayWords = b.wordHistory?.[today]||0;
+  document.getElementById('stat-today').textContent = todayWords.toLocaleString();
+  document.getElementById('stat-sessions').textContent = todaySessions.length;
+
+  const days = Object.keys(b.wordHistory||{}).sort();
+  let avg = 0;
+  if(days.length>0){
+    const sum = days.reduce((s,d)=>s+(b.wordHistory[d]||0),0);
+    avg = Math.round(sum/days.length);
+  }
+  document.getElementById('stat-avg').textContent = avg.toLocaleString();
+
+  const daysLeft = b.deadline ? Math.ceil((new Date(b.deadline)-new Date())/86400000) : null;
+  document.getElementById('stat-pace').textContent = daysLeft!=null?Math.max(0,daysLeft):'—';
+
+  // Today's promise
+  const todayMin = getTodayMinutes();
+  const minGoal = b.dailyMin||30;
+  const minPct = Math.min(100, Math.round(todayMin/minGoal*100));
+  document.getElementById('today-min-display').textContent = Math.round(todayMin);
+  document.getElementById('today-min-display').className = 'today-min-display '+(todayMin>=minGoal?'met':'not-met');
+  document.getElementById('today-min-goal').textContent = minGoal;
+  document.getElementById('today-pb').style.width = minPct+'%';
+  const badge = document.getElementById('today-badge');
+  if(todayMin>=minGoal){
+    badge.textContent='✓ Met!';badge.className='tag tag-done';
+  } else {
+    badge.textContent='In Progress';badge.className='tag tag-draft';
+  }
+
+  // Deadline card
+  updateDashDeadlineCard(b);
+
+  // Quote
+  const quoteIdx = Math.floor(new Date().getDate()%QUOTES.length);
+  document.getElementById('daily-quote').textContent = QUOTES[quoteIdx];
+
+  // Mini checklist
+  buildDashChecklist();
+}
+
+function updateDashDeadlineCard(b){
+  const el = document.getElementById('dash-deadline-content');
+  if(!b.deadline){ el.innerHTML='<div style="color:var(--text3);font-size:.82rem;margin-top:8px">No deadline set.</div><button class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="navigate(\'deadline\')">Set Deadline →</button>'; return; }
+  const daysLeft = Math.ceil((new Date(b.deadline)-new Date())/86400000);
+  const totalWritten = b.chapters.reduce((s,c)=>s+c.wordsWritten,0);
+  const remaining = Math.max(0,b.wordGoal-totalWritten);
+  const paceNeeded = daysLeft>0?Math.ceil(remaining/daysLeft):0;
+  const cls = daysLeft<7?'urgent':daysLeft<30?'warn':'ok';
+  el.innerHTML = `
+    <div class="deadline-days-left ${cls}" style="font-size:2rem">${Math.max(0,daysLeft)}</div>
+    <div style="font-size:.72rem;color:var(--text3);margin-bottom:8px">days until ${new Date(b.deadline+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}</div>
+    <div style="font-size:.8rem;color:var(--text2)"><span style="color:var(--gold);font-family:var(--font-m)">${paceNeeded.toLocaleString()}</span> words/day needed</div>
+  `;
+}
+
+function buildDashChecklist(){
+  const b = activeBook(); if(!b) return;
+  const today = nowStr();
+  const cl = (b.checklistState||{})[today]||{};
+  const todayMin = getTodayMinutes();
+  const minGoal = b.dailyMin||30;
+
+  const items = [
+    {id:'min30', label:`Write ${minGoal} min minimum`, sub:'Linked to Pomodoro timer', auto: todayMin>=minGoal},
+    {id:'review', label:'Review yesterday\'s words', sub:'Open your chapter and read it through'},
+    {id:'milestone', label:'Mark a chapter milestone', sub:'Check off outline, draft, or self-edit'},
+    {id:'idea', label:'Add an idea to Theme Vault', sub:'One insight, quote, or example'},
+  ];
+
+  const container = document.getElementById('dash-checklist');
+  container.innerHTML = items.map(item=>{
+    const done = item.auto||cl[item.id];
+    return `<div class="checklist-item">
+      <div class="check-box ${done?'checked':''}" onclick="toggleDashCheck('${item.id}',this,${item.auto})"></div>
+      <div style="flex:1">
+        <div class="check-text ${done?'done':''}">${item.label}</div>
+        <div class="check-sub">${item.sub}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleDashCheck(id, el, isAuto){
+  if(isAuto) return;
+  const b = activeBook(); if(!b) return;
+  const today = nowStr();
+  if(!b.checklistState) b.checklistState={};
+  if(!b.checklistState[today]) b.checklistState[today]={};
+  const cur = b.checklistState[today][id]||false;
+  b.checklistState[today][id] = !cur;
+  saveState();
+  buildDashChecklist();
+}
+
+function getTodayMinutes(){
+  const b = activeBook(); if(!b) return 0;
+  const today = nowStr();
+  return (b.sessions||[]).filter(s=>s.date===today).reduce((s,x)=>s+x.minutes,0);
+}
+
+// ═══════════════════════════════════════════════════════
+// PLANNER
+// ═══════════════════════════════════════════════════════
+function refreshPlanner(){
+  const b = activeBook(); if(!b) return;
+  document.getElementById('plan-title').value = b.title||'';
+  document.getElementById('plan-subtitle').value = b.subtitle||'';
+  document.getElementById('plan-author').value = b.author||'';
+  document.getElementById('plan-wordgoal').value = b.wordGoal||50000;
+  document.getElementById('planner-book-name').textContent = b.title;
+  renderChapterList();
+}
+
+function updateBookMeta(){
+  const b = activeBook(); if(!b) return;
+  b.title = document.getElementById('plan-title').value.trim()||b.title;
+  b.subtitle = document.getElementById('plan-subtitle').value.trim();
+  b.author = document.getElementById('plan-author').value.trim();
+  b.wordGoal = parseInt(document.getElementById('plan-wordgoal').value)||b.wordGoal;
+  saveState();
+  buildBookSelect();
+  refreshDashboard();
+}
+
+function renderChapterList(){
+  const b = activeBook(); if(!b) return;
+  const container = document.getElementById('chapter-list');
+  container.innerHTML = b.chapters.map((ch,i)=>`
+    <div class="chapter-card" draggable="true" data-id="${ch.id}"
+         ondragstart="chDragStart(event,'${ch.id}')"
+         ondragover="chDragOver(event)"
+         ondrop="chDrop(event,'${ch.id}')">
+      <div class="chapter-header">
+        <div class="drag-handle">⋮⋮</div>
+        <div class="chapter-num">${i+1}.</div>
+        <input class="chapter-title-input" value="${escHtml(ch.title)}"
+               onchange="updateChapterTitle('${ch.id}',this.value)"
+               placeholder="Chapter title…">
+        <div class="chapter-actions">
+          <button class="ch-action-btn" onclick="openStudioChapter('${ch.id}')" title="Write">✍️</button>
+          <button class="ch-action-btn" onclick="removeChapter('${ch.id}')" title="Delete" style="color:var(--red)">🗑</button>
+        </div>
+      </div>
+      <div class="chapter-meta">
+        <div class="chapter-wc">
+          <span>${ch.wordsWritten.toLocaleString()}</span> / ${ch.targetWords.toLocaleString()} words
+        </div>
+        <select class="chapter-status-select" onchange="updateChapterStatus('${ch.id}',this.value)">
+          <option value="notstarted" ${ch.status==='notstarted'?'selected':''}>Not Started</option>
+          <option value="draft" ${ch.status==='draft'?'selected':''}>Drafting</option>
+          <option value="revising" ${ch.status==='revising'?'selected':''}>Revising</option>
+          <option value="done" ${ch.status==='done'?'selected':''}>Done ✓</option>
+        </select>
+      </div>
+      <div class="pb-wrap" style="margin-bottom:8px">
+        <div class="pb-fill green" style="width:${ch.targetWords>0?Math.min(100,Math.round(ch.wordsWritten/ch.targetWords*100)):0}%"></div>
+      </div>
+      <div class="chapter-mini-checks">
+        ${['outline','draft','selfEdit'].map(k=>`
+          <div class="mini-check ${ch.checks[k]?'done':''}"
+               onclick="toggleMiniCheck('${ch.id}','${k}')">
+            <span class="mc-icon">${ch.checks[k]?'✓':'○'}</span>
+            ${{outline:'Outline',draft:'First Draft',selfEdit:'Self-Edit'}[k]}
+          </div>`).join('')}
+      </div>
+      <div style="margin-top:8px">
+        <input type="number" style="width:110px;display:inline-block"
+               value="${ch.targetWords}"
+               onchange="updateChapterTargetWords('${ch.id}',this.value)"
+               min="0" step="100">
+        <span style="font-size:.72rem;color:var(--text3);margin-left:5px">target words</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+function escHtml(t){ return (t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+let dragSrcId = null;
+function chDragStart(e, id){ dragSrcId=id; e.dataTransfer.effectAllowed='move'; }
+function chDragOver(e){ e.preventDefault(); e.dataTransfer.dropEffect='move'; }
+function chDrop(e, targetId){
+  e.preventDefault();
+  const b=activeBook(); if(!b||dragSrcId===targetId) return;
+  const si=b.chapters.findIndex(c=>c.id===dragSrcId);
+  const ti=b.chapters.findIndex(c=>c.id===targetId);
+  if(si<0||ti<0) return;
+  const [ch]=b.chapters.splice(si,1);
+  b.chapters.splice(ti,0,ch);
+  b.chapters.forEach((c,i)=>c.num=i+1);
+  saveState(); renderChapterList();
+}
+
+function updateChapterTitle(id, val){
+  const b=activeBook(); if(!b) return;
+  const ch=b.chapters.find(c=>c.id===id); if(!ch) return;
+  ch.title=val; saveState(); buildStudioTabs(); buildPomoChapterSelect();
+}
+
+function updateChapterStatus(id, val){
+  const b=activeBook(); if(!b) return;
+  const ch=b.chapters.find(c=>c.id===id); if(!ch) return;
+  ch.status=val; saveState(); checkBadges();
+}
+
+function updateChapterTargetWords(id, val){
+  const b=activeBook(); if(!b) return;
+  const ch=b.chapters.find(c=>c.id===id); if(!ch) return;
+  ch.targetWords=parseInt(val)||0; saveState();
+}
+
+function toggleMiniCheck(id, key){
+  const b=activeBook(); if(!b) return;
+  const ch=b.chapters.find(c=>c.id===id); if(!ch) return;
+  ch.checks[key]=!ch.checks[key]; saveState(); renderChapterList();
+}
+
+function addChapter(){
+  const b=activeBook(); if(!b) return;
+  const wpt = b.wordGoal>0?Math.round(b.wordGoal/Math.max(1,b.chapters.length+1)):2000;
+  b.chapters.push({
+    id:uid(), num:b.chapters.length+1,
+    title:`Chapter ${b.chapters.length+1}`,
+    targetWords:wpt, wordsWritten:0,
+    status:'notstarted',
+    checks:{outline:false,draft:false,selfEdit:false},
+    content:'', notes:''
+  });
+  saveState(); renderChapterList(); buildStudioTabs(); buildPomoChapterSelect();
+  showToast('Chapter added','success');
+}
+
+function removeChapter(id){
+  const b=activeBook(); if(!b) return;
+  if(!confirm('Remove this chapter? Writing content will be lost.')) return;
+  b.chapters=b.chapters.filter(c=>c.id!==id);
+  b.chapters.forEach((c,i)=>c.num=i+1);
+  saveState(); renderChapterList(); buildStudioTabs(); buildPomoChapterSelect();
+}
+
+function rebalanceWordCounts(){
+  const b=activeBook(); if(!b||b.chapters.length===0) return;
+  const wpt=Math.round(b.wordGoal/b.chapters.length);
+  b.chapters.forEach(c=>c.targetWords=wpt);
+  saveState(); renderChapterList();
+  showToast('Word targets rebalanced','success');
+}
+
+function openStudioChapter(id){
+  navigate('studio');
+  setTimeout(()=>selectStudioChapter(id),50);
+}
+
+// ═══════════════════════════════════════════════════════
+// DEADLINE / TIMELINE
+// ═══════════════════════════════════════════════════════
+function refreshDeadline(){
+  const b=activeBook(); if(!b) return;
+  document.getElementById('deadline-input').value=b.deadline||'';
+  document.getElementById('dailymin-input').value=b.dailyMin||30;
+
+  if(!b.deadline){ document.getElementById('deadline-display').style.display='none'; updateProjectedFinish(); return; }
+  document.getElementById('deadline-display').style.display='block';
+
+  const now = new Date();
+  const dl = new Date(b.deadline+'T12:00:00');
+  const daysLeft = Math.ceil((dl-now)/86400000);
+  const totalDays = b.createdAt ? Math.ceil((dl-new Date(b.createdAt))/86400000) : null;
+  const daysPassed = totalDays ? totalDays-daysLeft : 0;
+  const pct = totalDays && totalDays>0 ? Math.min(100,Math.round(daysPassed/totalDays*100)) : 0;
+
+  const el = document.getElementById('days-left-num');
+  el.textContent = Math.max(0,daysLeft);
+  el.className = 'deadline-days-left '+(daysLeft<7?'urgent':daysLeft<30?'warn':'ok');
+  document.getElementById('days-left-meta').textContent =
+    `days until ${dl.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}`;
+  document.getElementById('deadline-pb').style.width = pct+'%';
+  document.getElementById('deadline-label-text').textContent = `${pct}% of your writing window used`;
+
+  const totalWritten=b.chapters.reduce((s,c)=>s+c.wordsWritten,0);
+  const remaining=Math.max(0,b.wordGoal-totalWritten);
+  const paceNeeded=daysLeft>0?Math.ceil(remaining/daysLeft):remaining;
+  document.getElementById('required-pace').textContent=paceNeeded.toLocaleString();
+
+  // 7-day average
+  const days=Object.keys(b.wordHistory||{}).sort().slice(-7);
+  const avgPace=days.length>0?Math.round(days.reduce((s,d)=>s+(b.wordHistory[d]||0),0)/days.length):0;
+  document.getElementById('current-pace').textContent=avgPace.toLocaleString();
+
+  const verdict=document.getElementById('pace-verdict');
+  if(avgPace>=paceNeeded){
+    verdict.style.background='rgba(63,176,122,.1)';verdict.style.color='var(--green)';
+    verdict.textContent='✓ You\'re on track! Keep this pace and you\'ll finish on time.';
+  } else if(avgPace>=paceNeeded*.7){
+    verdict.style.background='rgba(217,133,58,.1)';verdict.style.color='var(--amber)';
+    verdict.textContent=`⚠ Slightly behind. You need ${(paceNeeded-avgPace).toLocaleString()} more words/day.`;
+  } else {
+    verdict.style.background='rgba(217,84,84,.1)';verdict.style.color='var(--red)';
+    verdict.textContent=`🚨 Behind pace. Need to write ${(paceNeeded-avgPace).toLocaleString()} more words/day. Let's go!`;
+  }
+
+  updateProjectedFinish();
+}
+
+function saveDeadline(){
+  const b=activeBook(); if(!b) return;
+  b.deadline=document.getElementById('deadline-input').value;
+  b.dailyMin=parseInt(document.getElementById('dailymin-input').value)||30;
+  saveState(); refreshDeadline(); refreshDashboard();
+}
+
+function updateProjectedFinish(){
+  const b=activeBook(); if(!b) return;
+  const el=document.getElementById('projected-finish');
+  const totalWritten=b.chapters.reduce((s,c)=>s+c.wordsWritten,0);
+  const remaining=Math.max(0,b.wordGoal-totalWritten);
+  const days=Object.keys(b.wordHistory||{}).sort().slice(-7);
+  const avgPace=days.length>0?Math.round(days.reduce((s,d)=>s+(b.wordHistory[d]||0),0)/days.length):0;
+  if(remaining===0){el.innerHTML='<span style="color:var(--green)">🎉 Word goal reached! Manuscript complete.</span>';return;}
+  if(avgPace===0){el.innerHTML='<span style="color:var(--text3)">No writing data yet. Start a session to calculate projection.</span>';return;}
+  const daysToFinish=Math.ceil(remaining/avgPace);
+  const projected=new Date(); projected.setDate(projected.getDate()+daysToFinish);
+  let html=`At your current pace, you'll finish in <strong style="color:var(--gold)">${daysToFinish} days</strong>`;
+  html+=` (${projected.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}).`;
+  if(b.deadline){
+    const dl=new Date(b.deadline+'T12:00:00');
+    const diff=Math.ceil((dl-projected)/86400000);
+    if(diff>=0) html+=` <span style="color:var(--green)">That's ${diff} days before your deadline. 🚀</span>`;
+    else html+=` <span style="color:var(--red)">That's ${Math.abs(diff)} days after your deadline. Pick up the pace!</span>`;
+  }
+  el.innerHTML=html;
+}
+
+// ═══════════════════════════════════════════════════════
+// POMODORO
+// ═══════════════════════════════════════════════════════
+let pomo = {
+  interval: null,
+  secondsLeft: 0,
+  totalSeconds: 0,
+  running: false,
+  isBreak: false,
+  sessionCount: 0,
+  sessionStart: null,
+  sessionChapter: null,
+  wordCountAtStart: 0
+};
+let audioCtx = null;
+let tickNode = null;
+
+function getSettings(){
+  return state.settings||{workMin:25,breakMin:5,longBreakEvery:4,longBreakMin:15,tick:true,autoBreak:false};
+}
+
+function refreshPomo(){
+  const s=getSettings();
+  if(!pomo.running){
+    pomo.secondsLeft=s.workMin*60;
+    pomo.totalSeconds=s.workMin*60;
+    updatePomoDisplay();
+  }
+  updatePomoLog();
+}
+
+function buildPomoChapterSelect(){
+  const b=activeBook(); if(!b) return;
+  const sel=document.getElementById('pomo-chapter-select');
+  sel.innerHTML=`<option value="freewrite">Freewrite (no chapter)</option>`+
+    b.chapters.map(c=>`<option value="${c.id}">Ch.${c.num}: ${c.title}</option>`).join('');
+}
+
+function pomoStart(){
+  if(pomo.running) return;
+  const s=getSettings();
+  if(pomo.secondsLeft<=0){
+    pomo.secondsLeft=pomo.isBreak?s.breakMin*60:s.workMin*60;
+    pomo.totalSeconds=pomo.secondsLeft;
+  }
+  pomo.running=true;
+  pomo.sessionStart=Date.now();
+
+  const b=activeBook();
+  const chId=document.getElementById('pomo-chapter-select').value;
+  pomo.sessionChapter=chId;
+  const ch=b?.chapters.find(c=>c.id===chId);
+  pomo.wordCountAtStart=ch?ch.wordsWritten:0;
+
+  document.getElementById('pomo-orb').className='pomo-orb '+(pomo.isBreak?'break':'running');
+  document.getElementById('pomo-start-btn').disabled=true;
+  document.getElementById('pomo-pause-btn').disabled=false;
+
+  if(s.tick&&!pomo.isBreak) startTick();
+
+  pomo.interval=setInterval(()=>{
+    pomo.secondsLeft--;
+    updatePomoDisplay();
+    updatePomoArc();
+    if(pomo.secondsLeft<=0) pomoComplete();
+  },1000);
+}
+
+function pomoPause(){
+  if(!pomo.running) return;
+  pomo.running=false;
+  clearInterval(pomo.interval);
+  stopTick();
+  // Count minutes so far
+  const elapsed=Math.floor((Date.now()-pomo.sessionStart)/60000);
+  if(elapsed>0) logSession(elapsed);
+  pomo.sessionStart=Date.now();
+  document.getElementById('pomo-orb').className='pomo-orb';
+  document.getElementById('pomo-start-btn').disabled=false;
+  document.getElementById('pomo-pause-btn').disabled=true;
+  showToast(`Paused — ${elapsed} min logged`,'warning');
+}
+
+function pomoReset(){
+  pomo.running=false;
+  clearInterval(pomo.interval);
+  stopTick();
+  const s=getSettings();
+  pomo.secondsLeft=s.workMin*60;
+  pomo.totalSeconds=s.workMin*60;
+  pomo.isBreak=false;
+  document.getElementById('pomo-orb').className='pomo-orb';
+  document.getElementById('pomo-start-btn').disabled=false;
+  document.getElementById('pomo-pause-btn').disabled=true;
+  document.getElementById('pomo-session-type').textContent='Work Block';
+  updatePomoDisplay();
+  updatePomoArc();
+}
+
+function pomoComplete(){
+  clearInterval(pomo.interval);
+  stopTick();
+  pomo.running=false;
+
+  const s=getSettings();
+  const minutes=pomo.isBreak?s.breakMin:s.workMin;
+
+  if(!pomo.isBreak){
+    pomo.sessionCount++;
+    logSession(minutes);
+    playPing();
+    launchConfetti();
+
+    // Easter egg every 5th session
+    if(pomo.sessionCount%5===0){
+      showToast("✨ 5 sessions strong! Real focus is a skill you're building — just like the ones you write about.",'success');
+    } else {
+      showToast(`🎉 Pomodoro complete! ${minutes} min logged.`,'success');
+    }
+
+    // Auto-break
+    if(s.autoBreak){
+      const isLong=s.longBreakEvery>0&&pomo.sessionCount%s.longBreakEvery===0;
+      pomo.isBreak=true;
+      pomo.secondsLeft=isLong?s.longBreakMin*60:s.breakMin*60;
+      pomo.totalSeconds=pomo.secondsLeft;
+      document.getElementById('pomo-session-type').textContent=isLong?'Long Break':'Short Break';
+      document.getElementById('pomo-orb').className='pomo-orb break';
+      pomoStart();
+    } else {
+      // Switch to break mode but don't start
+      pomo.isBreak=true;
+      const isLong=s.longBreakEvery>0&&pomo.sessionCount%s.longBreakEvery===0;
+      pomo.secondsLeft=isLong?s.longBreakMin*60:s.breakMin*60;
+      pomo.totalSeconds=pomo.secondsLeft;
+      document.getElementById('pomo-session-type').textContent=isLong?'Long Break — Start when ready':'Short Break — Start when ready';
+      document.getElementById('pomo-start-btn').disabled=false;
+      document.getElementById('pomo-pause-btn').disabled=true;
+      document.getElementById('pomo-orb').className='pomo-orb break';
+    }
+  } else {
+    pomo.isBreak=false;
+    pomo.secondsLeft=s.workMin*60;
+    pomo.totalSeconds=s.workMin*60;
+    document.getElementById('pomo-session-type').textContent='Work Block';
+    document.getElementById('pomo-start-btn').disabled=false;
+    document.getElementById('pomo-pause-btn').disabled=true;
+    document.getElementById('pomo-orb').className='pomo-orb';
+    showToast('Break over — time to write! 💪','success');
+  }
+
+  updatePomoDisplay();
+  updatePomoArc();
+  updatePomoLog();
+  refreshDashboard();
+  checkBadges();
+}
+
+function logSession(minutes){
+  const b=activeBook(); if(!b) return;
+  if(!b.sessions) b.sessions=[];
+  const today=nowStr();
+
+  // Calculate words written during session
+  const chId=pomo.sessionChapter;
+  const ch=b.chapters.find(c=>c.id===chId);
+  const wordsDelta=ch?Math.max(0,ch.wordsWritten-pomo.wordCountAtStart):0;
+
+  b.sessions.push({date:today, minutes, chapter:chId, words:wordsDelta, ts:Date.now()});
+
+  // Update word history
+  if(!b.wordHistory) b.wordHistory={};
+  b.wordHistory[today]=(b.wordHistory[today]||0)+wordsDelta;
+
+  saveState();
+  updatePomoLog();
+
+  // Update stat
+  document.getElementById('pomo-daily-min').textContent=Math.round(getTodayMinutes());
+}
+
+function updatePomoDisplay(){
+  const m=Math.floor(pomo.secondsLeft/60);
+  const s=pomo.secondsLeft%60;
+  document.getElementById('pomo-time').textContent=`${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  document.getElementById('pomo-label').textContent=pomo.running?(pomo.isBreak?'break':'focus'):'ready';
+  document.getElementById('pomo-session-count').textContent=pomo.sessionCount+1;
+  document.getElementById('pomo-daily-min').textContent=Math.round(getTodayMinutes());
+}
+
+function updatePomoArc(){
+  const pct=pomo.totalSeconds>0?1-(pomo.secondsLeft/pomo.totalSeconds):0;
+  const circ=2*Math.PI*100;
+  const arc=document.getElementById('pomo-arc');
+  arc.style.strokeDashoffset=circ*pct;
+  arc.style.stroke=pomo.isBreak?'var(--green)':'var(--gold)';
+}
+
+function updatePomoLog(){
+  const b=activeBook(); if(!b) return;
+  const today=nowStr();
+  const sessions=(b.sessions||[]).filter(s=>s.date===today);
+  const container=document.getElementById('pomo-log-list');
+  if(sessions.length===0){
+    container.innerHTML='<div style="font-size:.8rem;color:var(--text3);text-align:center;padding:12px">No sessions yet today.</div>';
+    return;
+  }
+  container.innerHTML=sessions.slice().reverse().map(s=>{
+    const ch=b.chapters.find(c=>c.id===s.chapter);
+    const label=ch?`Ch.${ch.num}: ${ch.title}`:'Freewrite';
+    const time=new Date(s.ts).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+    return `<div class="pomo-log-item">
+      <div class="pomo-dot"></div>
+      <div style="flex:1"><span style="font-weight:500">${s.minutes} min</span> · ${label}</div>
+      <div style="color:var(--text3)">${time}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── WEB AUDIO ──
+function getAudioCtx(){
+  if(!audioCtx) audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+  return audioCtx;
+}
+
+function startTick(){
+  stopTick();
+  if(!getSettings().tick) return;
+  try{
+    const ctx=getAudioCtx();
+    function tick(){
+      const osc=ctx.createOscillator();
+      const gain=ctx.createGain();
+      const filter=ctx.createBiquadFilter();
+      filter.type='lowpass'; filter.frequency.value=800;
+      osc.connect(filter); filter.connect(gain); gain.connect(ctx.destination);
+      osc.type='sine'; osc.frequency.value=320;
+      gain.gain.setValueAtTime(0,ctx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.04,ctx.currentTime+0.01);
+      gain.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.08);
+      osc.start(); osc.stop(ctx.currentTime+0.1);
+    }
+    tickNode=setInterval(tick,1000);
+  }catch(e){}
+}
+
+function stopTick(){
+  if(tickNode){clearInterval(tickNode);tickNode=null;}
+}
+
+function playPing(){
+  try{
+    const ctx=getAudioCtx();
+    [0,0.15,0.3].forEach((delay,i)=>{
+      const osc=ctx.createOscillator();
+      const gain=ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      const freqs=[523,659,784];
+      osc.type='sine'; osc.frequency.value=freqs[i];
+      gain.gain.setValueAtTime(0,ctx.currentTime+delay);
+      gain.gain.linearRampToValueAtTime(0.2,ctx.currentTime+delay+0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+delay+1.2);
+      osc.start(ctx.currentTime+delay);
+      osc.stop(ctx.currentTime+delay+1.3);
+    });
+  }catch(e){}
+}
+
+function launchConfetti(){
+  const colors=['var(--gold)','var(--green)','var(--blue)','var(--amber)','var(--purple)'];
+  for(let i=0;i<40;i++){
+    const el=document.createElement('div');
+    el.className='confetti-piece';
+    el.style.cssText=`left:${Math.random()*100}vw;top:-10px;background:${colors[Math.floor(Math.random()*colors.length)]};animation-duration:${2+Math.random()*2}s;animation-delay:${Math.random()*.5}s;transform:rotate(${Math.random()*360}deg)`;
+    document.body.appendChild(el);
+    setTimeout(()=>el.remove(),4000);
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// WRITING STUDIO
+// ═══════════════════════════════════════════════════════
+let currentStudioChapterId = 'freewrite';
+let studioSaveTimeout = null;
+let focusMode = false;
+
+function buildStudioTabs(){
+  const b=activeBook(); if(!b) return;
+  const container=document.getElementById('studio-tabs');
+  container.innerHTML=`<button class="studio-tab freewrite ${currentStudioChapterId==='freewrite'?'active':''}" onclick="selectStudioChapter('freewrite')">📝 Freewrite</button>`+
+    b.chapters.map(c=>`<button class="studio-tab ${currentStudioChapterId===c.id?'active':''}"
+      onclick="selectStudioChapter('${c.id}')">Ch.${c.num}: ${c.title.slice(0,20)}${c.title.length>20?'…':''}</button>`).join('');
+  loadStudioContent();
+}
+
+function selectStudioChapter(id){
+  currentStudioChapterId=id;
+  buildStudioTabs();
+  loadStudioContent();
+}
+
+function loadStudioContent(){
+  const b=activeBook(); if(!b) return;
+  const editor=document.getElementById('studio-editor');
+  if(currentStudioChapterId==='freewrite'){
+    editor.innerHTML=b.freewrite||'';
+    document.getElementById('studio-chapter-label').textContent='Freewrite';
+  } else {
+    const ch=b.chapters.find(c=>c.id===currentStudioChapterId);
+    if(ch){ editor.innerHTML=ch.content||''; document.getElementById('studio-chapter-label').textContent=`Ch.${ch.num}: ${ch.title}`; }
+  }
+  updateStudioWC();
+}
+
+function studioInput(){
+  updateStudioWC();
+  // Schedule save + word count update
+  clearTimeout(studioSaveTimeout);
+  document.getElementById('autosave-status').textContent='Unsaved…';
+  studioSaveTimeout=setTimeout(()=>{
+    autosaveStudio();
+    document.getElementById('autosave-status').textContent='Saved ✓';
+    setTimeout(()=>document.getElementById('autosave-status').textContent='Auto-saving…',2000);
+  },2000);
+}
+
+function studioKeydown(e){
+  if(e.key==='Tab'){e.preventDefault();document.execCommand('insertHTML',false,'&emsp;');}
+}
+
+function updateStudioWC(){
+  const editor=document.getElementById('studio-editor');
+  const text=editor.innerText||'';
+  const wc=text.trim()===''?0:text.trim().split(/\s+/).length;
+  document.getElementById('studio-wc').textContent=`${wc.toLocaleString()} words`;
+}
+
+function autosaveStudio(){
+  const b=activeBook(); if(!b) return;
+  const editor=document.getElementById('studio-editor');
+  const content=editor.innerHTML||'';
+  const text=editor.innerText||'';
+  const wc=text.trim()===''?0:text.trim().split(/\s+/).length;
+
+  if(currentStudioChapterId==='freewrite'){
+    b.freewrite=content;
+  } else {
+    const ch=b.chapters.find(c=>c.id===currentStudioChapterId);
+    if(ch){
+      const prev=ch.wordsWritten;
+      ch.content=content;
+      ch.wordsWritten=wc;
+      // Track word delta in history
+      if(wc>prev){
+        const today=nowStr();
+        if(!b.wordHistory) b.wordHistory={};
+        b.wordHistory[today]=(b.wordHistory[today]||0)+(wc-prev);
+      }
+    }
+  }
+  saveState();
+  checkBadges();
+}
+
+function formatText(cmd){ document.execCommand(cmd,false,null); }
+function insertDash(){ document.execCommand('insertHTML',false,'&mdash;'); }
+
+function toggleFocusMode(){
+  focusMode=!focusMode;
+  document.getElementById('sidebar').style.display=focusMode?'none':'flex';
+  document.getElementById('topbar').style.display=focusMode?'none':'flex';
+  document.getElementById('data-warning').style.display=focusMode?'none':'flex';
+  document.getElementById('main').style.marginLeft=focusMode?'0':'220px';
+  document.getElementById('studio-editor').style.padding=focusMode?'40px 20%':'20px 24px';
+  document.getElementById('focus-mode-btn').textContent=focusMode?'⊠ Exit Focus':'⛶ Focus';
+  if(focusMode) showToast('Focus mode — press Escape to exit','success');
+}
+
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'&&focusMode) toggleFocusMode();
+});
+
+// Export writing
+function exportWriting(format='txt'){
+  const b=activeBook(); if(!b) return;
+  let out=`${b.title}\n${b.subtitle?b.subtitle+'\n':''}${b.author?'by '+b.author+'\n':''}\n`;
+  b.chapters.forEach(ch=>{
+    out+=`\n${'='.repeat(60)}\n${ch.title}\n${'='.repeat(60)}\n\n`;
+    const div=document.createElement('div'); div.innerHTML=ch.content||'';
+    out+=(div.innerText||'').trim()+'\n';
+  });
+  if(b.freewrite){
+    out+=`\n${'='.repeat(60)}\nFreewrite\n${'='.repeat(60)}\n\n`;
+    const div=document.createElement('div'); div.innerHTML=b.freewrite;
+    out+=(div.innerText||'').trim()+'\n';
+  }
+  downloadText(out, `${b.title.replace(/[^a-z0-9]/gi,'_')}.${format}`, 'text/plain');
+}
+
+// ═══════════════════════════════════════════════════════
+// CHECKLIST
+// ═══════════════════════════════════════════════════════
+function refreshChecklist(){
+  const b=activeBook(); if(!b) return;
+  const today=nowStr();
+  const d=new Date();
+  document.getElementById('checklist-date').textContent=
+    d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+
+  const cl=(b.checklistState||{})[today]||{};
+  const todayMin=getTodayMinutes();
+  const minGoal=b.dailyMin||30;
+
+  // Core goals
+  const core=[
+    {id:'min30', label:`Write ${minGoal}+ minutes`, sub:'Linked to Pomodoro', auto:todayMin>=minGoal},
+    {id:'review', label:'Review yesterday\'s writing', sub:'Read your last session before writing new'},
+    {id:'idea', label:'Add to Theme Vault', sub:'One new idea, quote, or research note'},
+    {id:'milestone', label:'Mark a chapter milestone', sub:'Outline, draft, or self-edit checkbox'},
+    {id:'plan', label:'Plan tomorrow\'s session', sub:'Know exactly what chapter you\'ll open'},
+  ];
+
+  document.getElementById('core-checklist').innerHTML=core.map(item=>{
+    const done=item.auto||cl[item.id];
+    return checklistItemHTML(item, done, 'core');
+  }).join('');
+
+  // Milestones from chapters
+  const milestones=[];
+  b.chapters.forEach(ch=>{
+    if(!ch.checks.outline) milestones.push({id:`ch_outline_${ch.id}`,label:`Ch.${ch.num} Outline`,sub:ch.title});
+    else if(!ch.checks.draft) milestones.push({id:`ch_draft_${ch.id}`,label:`Ch.${ch.num} First Draft`,sub:ch.title});
+    else if(!ch.checks.selfEdit) milestones.push({id:`ch_edit_${ch.id}`,label:`Ch.${ch.num} Self-Edit`,sub:ch.title});
+  });
+  const shown=milestones.slice(0,4);
+  document.getElementById('milestone-checklist').innerHTML=shown.length?
+    shown.map(item=>checklistItemHTML(item,cl[item.id],'milestone')).join(''):
+    '<div style="font-size:.82rem;color:var(--green);padding:10px 0">🎉 All chapter milestones are on track!</div>';
+
+  // Custom tasks
+  renderCustomTasks();
+
+  // Badge check
+  const allCore=core.every(i=>i.auto||cl[i.id]);
+  if(allCore) updateChecklistBadge(false);
+  else updateChecklistBadge(true);
+}
+
+function checklistItemHTML(item, done, type){
+  return `<div class="checklist-item">
+    <div class="check-box ${done?'checked':''}" onclick="toggleCheck('${item.id}','${type}',this)"></div>
+    <div style="flex:1">
+      <div class="check-text ${done?'done':''}">${item.label}</div>
+      <div class="check-sub">${item.sub}</div>
+    </div>
+  </div>`;
+}
+
+function toggleCheck(id, type, el){
+  const b=activeBook(); if(!b) return;
+  const today=nowStr();
+  if(!b.checklistState) b.checklistState={};
+  if(!b.checklistState[today]) b.checklistState[today]={};
+  const cur=b.checklistState[today][id]||false;
+  b.checklistState[today][id]=!cur;
+
+  // If milestone check, also update chapter
+  if(type==='milestone'&&id.startsWith('ch_')){
+    const parts=id.split('_');
+    const key=parts[1]; const chId=parts[2];
+    const ch=b.chapters.find(c=>c.id===chId);
+    if(ch) ch.checks[key]=!cur;
+  }
+  saveState(); refreshChecklist();
+}
+
+function addCustomTask(){
+  const input=document.getElementById('custom-task-input');
+  const val=input.value.trim(); if(!val) return;
+  const b=activeBook(); if(!b) return;
+  if(!b.customTasks) b.customTasks=[];
+  b.customTasks.push({id:uid(),text:val,date:nowStr()});
+  input.value='';
+  saveState(); renderCustomTasks();
+}
+
+function renderCustomTasks(){
+  const b=activeBook(); if(!b) return;
+  const today=nowStr();
+  const cl=(b.checklistState||{})[today]||{};
+  const tasks=(b.customTasks||[]).filter(t=>t.date===today);
+  const container=document.getElementById('custom-checklist');
+  container.innerHTML=tasks.length?tasks.map(t=>{
+    const done=cl[t.id]||false;
+    return `<div class="checklist-item">
+      <div class="check-box ${done?'checked':''}" onclick="toggleCheck('${t.id}','custom',this)"></div>
+      <div style="flex:1"><div class="check-text ${done?'done':''}">${t.text}</div></div>
+      <button style="background:transparent;border:none;color:var(--text3);cursor:pointer;font-size:.8rem" onclick="removeCustomTask('${t.id}')">✕</button>
+    </div>`;
+  }).join(''):
+  '<div style="font-size:.8rem;color:var(--text3);padding:8px 0">No custom tasks today.</div>';
+}
+
+function removeCustomTask(id){
+  const b=activeBook(); if(!b) return;
+  b.customTasks=(b.customTasks||[]).filter(t=>t.id!==id);
+  saveState(); renderCustomTasks();
+}
+
+function updateChecklistBadge(show){
+  const badge=document.getElementById('checklist-badge');
+  badge.style.display=show?'':'none';
+}
+
+// ═══════════════════════════════════════════════════════
+// ANALYTICS
+// ═══════════════════════════════════════════════════════
+function refreshAnalytics(){
+  const b=activeBook(); if(!b) return;
+  renderCharts(b);
+  renderHeatMap(b);
+  renderHealthScore(b);
+  renderAlltimeStats(b);
+}
+
+function renderCharts(b){
+  // Last 14 days
+  const days=[];
+  const wc=[];
+  const cum=[];
+  const now=new Date();
+  let running=0;
+  // First get total before the window
+  const allDates=Object.keys(b.wordHistory||{}).sort();
+  const firstDate=allDates.length?allDates[0]:null;
+  if(firstDate){
+    const cutoff=new Date(now); cutoff.setDate(cutoff.getDate()-14);
+    allDates.filter(d=>new Date(d)<cutoff).forEach(d=>running+=b.wordHistory[d]||0);
+  }
+  for(let i=13;i>=0;i--){
+    const d=new Date(now); d.setDate(d.getDate()-i);
+    const ds=dateStr(d);
+    const w=b.wordHistory?.[ds]||0;
+    running+=w;
+    days.push(d.toLocaleDateString('en-US',{month:'short',day:'numeric'}));
+    wc.push(w);
+    cum.push(running);
+  }
+  drawBarChart('chart-daily',days,wc,'var(--gold)');
+  drawLineChart('chart-cumulative',days,cum,'var(--green)',b.wordGoal);
+}
+
+function drawBarChart(id,labels,data,color){
+  const canvas=document.getElementById(id);
+  if(!canvas) return;
+  canvas.width=canvas.offsetWidth||800;
+  canvas.height=120;
+  const ctx=canvas.getContext('2d');
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  const max=Math.max(...data,1);
+  const W=canvas.width; const H=canvas.height;
+  const pad={l:10,r:10,t:10,b:24};
+  const bw=Math.floor((W-pad.l-pad.r)/data.length)-4;
+  ctx.fillStyle='rgba(255,255,255,.04)';
+  ctx.fillRect(pad.l,pad.t,W-pad.l-pad.r,H-pad.t-pad.b);
+  data.forEach((v,i)=>{
+    const x=pad.l+i*(bw+4);
+    const bh=v/max*(H-pad.t-pad.b);
+    const y=H-pad.b-bh;
+    const grad=ctx.createLinearGradient(0,y,0,H-pad.b);
+    grad.addColorStop(0,color);
+    grad.addColorStop(1,'rgba(201,168,76,.2)');
+    ctx.fillStyle=grad;
+    ctx.beginPath();
+    ctx.roundRect(x,y,bw,bh,2);
+    ctx.fill();
+    // Label
+    ctx.fillStyle='rgba(255,255,255,.3)';
+    ctx.font='9px DM Mono,monospace';
+    ctx.textAlign='center';
+    ctx.fillText(labels[i],x+bw/2,H-6);
+  });
+}
+
+function drawLineChart(id,labels,data,color,goal){
+  const canvas=document.getElementById(id);
+  if(!canvas) return;
+  canvas.width=canvas.offsetWidth||800;
+  canvas.height=100;
+  const ctx=canvas.getContext('2d');
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  const max=Math.max(...data,goal||1,1);
+  const W=canvas.width; const H=canvas.height;
+  const pad={l:10,r:10,t:8,b:20};
+  const gw=W-pad.l-pad.r; const gh=H-pad.t-pad.b;
+  const pts=data.map((v,i)=>({x:pad.l+i/(data.length-1)*gw, y:pad.t+(1-v/max)*gh}));
+
+  // Goal line
+  if(goal){
+    const gy=pad.t+(1-goal/max)*gh;
+    ctx.strokeStyle='rgba(217,133,58,.4)';
+    ctx.setLineDash([5,4]);
+    ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(pad.l,gy); ctx.lineTo(W-pad.r,gy); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle='rgba(217,133,58,.7)'; ctx.font='9px DM Mono,monospace';
+    ctx.fillText('Goal',W-pad.r-24,gy-3);
+  }
+
+  // Fill
+  const grad=ctx.createLinearGradient(0,pad.t,0,H-pad.b);
+  grad.addColorStop(0,color.replace(')',',0.3)').replace('var(--green)','rgba(63,176,122,0.3)'));
+  grad.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.beginPath();
+  ctx.moveTo(pts[0].x,H-pad.b);
+  ctx.lineTo(pts[0].x,pts[0].y);
+  pts.slice(1).forEach(p=>ctx.lineTo(p.x,p.y));
+  ctx.lineTo(pts[pts.length-1].x,H-pad.b);
+  ctx.closePath();
+  ctx.fillStyle='rgba(63,176,122,.15)';
+  ctx.fill();
+
+  // Line
+  ctx.strokeStyle='var(--green)';
+  ctx.lineWidth=2;
+  ctx.lineJoin='round';
+  ctx.beginPath();
+  pts.forEach((p,i)=>i===0?ctx.moveTo(p.x,p.y):ctx.lineTo(p.x,p.y));
+  ctx.stroke();
+
+  // Dots
+  pts.forEach(p=>{
+    ctx.beginPath(); ctx.arc(p.x,p.y,3,0,Math.PI*2);
+    ctx.fillStyle='var(--green)'; ctx.fill();
   });
 
-  const avgScore = (totalScore / totalVirtues).toFixed(1);
-  const strongPercent = Math.round((totalStrong / totalVirtues) * 100);
-
-  return { avgScore, strongPercent, totalAthletes: athletes.length };
+  // Labels
+  ctx.fillStyle='rgba(255,255,255,.3)'; ctx.font='9px DM Mono,monospace'; ctx.textAlign='center';
+  [0,Math.floor(data.length/2),data.length-1].forEach(i=>{
+    ctx.fillText(labels[i],pts[i].x,H-4);
+  });
 }
 
-// ─── MODALS ───────────────────────────────────────────────────────────────────
-function Modal({title, onClose, children}) {
-  return (
-    <div style={{position:"fixed", inset:0, background:"rgba(0,0,0,0.75)", zIndex:500, display:"flex", alignItems:"center", justifyContent:"center"}} onClick={e=>e.target===e.currentTarget&&onClose()}>
-      <div style={{background:"#fff", borderRadius:16, width:"92%", maxWidth:720, maxHeight:"92vh", overflow:"hidden", boxShadow:"0 25px 70px rgba(0,0,0,0.25)"}}>
-        <div style={{padding:"18px 24px", borderBottom:"1px solid #dee2e6", display:"flex", justifyContent:"space-between", alignItems:"center"}}>
-          <span style={{fontSize:21, fontWeight:800, color:C.orange}}>{title}</span>
-          <button onClick={onClose} style={{fontSize:24, background:"none", border:"none", color:"#666"}}>✕</button>
-        </div>
-        <div style={{padding:24, overflowY:"auto", maxHeight:"78vh"}}>{children}</div>
-      </div>
-    </div>
-  );
+function renderHeatMap(b){
+  const container=document.getElementById('heat-map');
+  container.innerHTML='';
+  const max=Math.max(...Object.values(b.wordHistory||{}).map(Number),1);
+  for(let i=89;i>=0;i--){
+    const d=new Date(); d.setDate(d.getDate()-i);
+    const ds=dateStr(d);
+    const w=b.wordHistory?.[ds]||0;
+    const intensity=w/max;
+    const cell=document.createElement('div');
+    cell.className='heat-cell';
+    cell.title=`${d.toLocaleDateString()}: ${w.toLocaleString()} words`;
+    if(w===0) cell.style.background='var(--bg4)';
+    else if(intensity<0.3) cell.style.background='rgba(201,168,76,.25)';
+    else if(intensity<0.65) cell.style.background='rgba(201,168,76,.55)';
+    else cell.style.background='var(--gold)';
+    container.appendChild(cell);
+  }
 }
 
-function ConfirmDelete({name, onConfirm, onCancel}) {
-  return (
-    <Modal title="Delete Athlete" onClose={onCancel}>
-      <p style={{fontSize:16, marginBottom:24}}>Are you sure you want to permanently delete <strong>{name}</strong>?</p>
-      <p style={{color:"#ef4444", marginBottom:24}}>This cannot be undone.</p>
-      <div style={{display:"flex", gap:12, justifyContent:"flex-end"}}>
-        <button onClick={onCancel} style={{padding:"12px 24px", border:"none", background:"#ddd", borderRadius:10}}>Cancel</button>
-        <button onClick={onConfirm} style={{padding:"12px 28px", border:"none", background:"#ef4444", color:"#fff", borderRadius:10, fontWeight:700}}>Yes, Delete</button>
-      </div>
-    </Modal>
-  );
+function renderHealthScore(b){
+  const total=b.chapters.reduce((s,c)=>s+c.wordsWritten,0);
+  const pct=b.wordGoal>0?total/b.wordGoal:0;
+  const streak=calcStreak(b);
+  const daysSinceStart=b.createdAt?Math.max(1,Math.ceil((Date.now()-new Date(b.createdAt))/86400000)):1;
+  const activeDays=Object.keys(b.wordHistory||{}).filter(d=>(b.wordHistory[d]||0)>0).length;
+  const consistency=daysSinceStart>0?activeDays/daysSinceStart:0;
+  const chapDone=b.chapters.filter(c=>c.status==='done').length/Math.max(1,b.chapters.length);
+  const score=Math.round((pct*.35+consistency*.3+(streak/30)*.2+chapDone*.15)*100);
+  document.getElementById('health-score').textContent=Math.min(100,score);
+  let verdict='',color='var(--text2)';
+  if(score>=80){verdict='Excellent — manuscript on track 🚀';color='var(--green)';}
+  else if(score>=60){verdict='Good progress — keep the streak going';color='var(--gold)';}
+  else if(score>=40){verdict='Building momentum — consistency is key';color='var(--amber)';}
+  else{verdict='Just getting started — every word counts';color='var(--text2)';}
+  document.getElementById('health-verdict').textContent=verdict;
+  document.getElementById('health-verdict').style.color=color;
+  document.getElementById('health-pb').style.width=Math.min(100,score)+'%';
 }
 
-// ─── EDIT MODAL ───────────────────────────────────────────────────────────────
-function EditModal({person, onSave, onClose}) {
-  const [data, setData] = useState({...person, notes: person.notes || ""});
-
-  const updateScore = (key, value) => setData(prev => ({...prev, scores: {...prev.scores, [key]: Number(value)}}));
-
-  return (
-    <Modal title={data.id ? "Edit Athlete" : "Add New Athlete"} onClose={onClose}>
-      <input placeholder="Athlete Name *" value={data.name||""} onChange={e=>setData({...data,name:e.target.value})} style={{width:"100%", padding:14, fontSize:17, border:`2px solid ${C.border}`, borderRadius:10, marginBottom:12}} />
-      <input placeholder="Role / Team (optional)" value={data.role||""} onChange={e=>setData({...data,role:e.target.value})} style={{width:"100%", padding:14, fontSize:17, border:`2px solid ${C.border}`, borderRadius:10, marginBottom:20}} />
-
-      <div style={{marginBottom:20}}>
-        <div style={{fontWeight:700, color:C.orange, marginBottom:12}}>Score Each Virtue (0–3)</div>
-        {Object.values(VIRTUES).map(t => (
-          <div key={t.key} style={{marginBottom:16, padding:16, background:"#fff", border:`1px solid ${t.border}`, borderRadius:12}}>
-            <div style={{display:"flex", alignItems:"center", gap:12, marginBottom:8}}>
-              <span style={{fontSize:28}}>{t.icon}</span>
-              <div style={{flex:1, fontWeight:700, color:t.color}}>{t.label}</div>
-            </div>
-            <div style={{fontSize:13, color:"#555", marginBottom:10}}>{t.scoreMeaning}</div>
-            <div style={{display:"flex", gap:6}}>
-              {[0,1,2,3].map(n => (
-                <button key={n} onClick={()=>updateScore(t.key,n)} style={{flex:1, padding:"10px", borderRadius:8, background: data.scores[t.key]===n ? C.orange : "#f1f3f5", color: data.scores[t.key]===n ? "#fff" : "#333", fontWeight:700}}>
-                  {n}
-                </button>
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <div style={{marginBottom:20}}>
-        <div style={{fontWeight:700, marginBottom:8}}>Notes / Observations / Prayers</div>
-        <textarea value={data.notes} onChange={e=>setData({...data, notes:e.target.value})} placeholder="Key moments, growth areas, specific prayers..." style={{width:"100%", height:130, padding:14, border:`2px solid ${C.border}`, borderRadius:10, resize:"vertical"}} />
-      </div>
-
-      <div style={{display:"flex", gap:12, justifyContent:"flex-end"}}>
-        <button onClick={onClose} style={{padding:"12px 24px", border:"none", background:"#ddd", borderRadius:10}}>Cancel</button>
-        <button onClick={()=>onSave(data)} style={{padding:"12px 32px", border:"none", background:C.orange, color:"#fff", borderRadius:10, fontWeight:700}} disabled={!data.name?.trim()}>💾 Save Changes</button>
-      </div>
-    </Modal>
-  );
+function renderAlltimeStats(b){
+  const total=b.chapters.reduce((s,c)=>s+c.wordsWritten,0);
+  const totalSessions=(b.sessions||[]).length;
+  const totalMin=(b.sessions||[]).reduce((s,x)=>s+x.minutes,0);
+  const activeDays=Object.keys(b.wordHistory||{}).filter(d=>(b.wordHistory[d]||0)>0).length;
+  const bestDay=Object.entries(b.wordHistory||{}).reduce((best,[d,w])=>w>best.w?{d,w}:{best},{d:'—',w:0});
+  document.getElementById('alltime-stats').innerHTML=`
+    <div style="display:flex;justify-content:space-between"><span style="color:var(--text3)">Total words</span><strong>${total.toLocaleString()}</strong></div>
+    <div style="display:flex;justify-content:space-between"><span style="color:var(--text3)">Total sessions</span><strong>${totalSessions}</strong></div>
+    <div style="display:flex;justify-content:space-between"><span style="color:var(--text3)">Total minutes</span><strong>${totalMin.toLocaleString()}</strong></div>
+    <div style="display:flex;justify-content:space-between"><span style="color:var(--text3)">Writing days</span><strong>${activeDays}</strong></div>
+    <div style="display:flex;justify-content:space-between"><span style="color:var(--text3)">Best day</span><strong>${bestDay.w.toLocaleString()} words</strong></div>
+    <div style="display:flex;justify-content:space-between"><span style="color:var(--text3)">Streak</span><strong style="color:var(--amber)">${calcStreak(b)} 🔥</strong></div>
+  `;
 }
 
-// ─── PERSON DETAIL ────────────────────────────────────────────────────────────
-function PersonDetail({person, onClose, onEdit}) {
-  const [tab, setTab] = useState("assess");
-  const combo = getCombo(person.scores);
+// ═══════════════════════════════════════════════════════
+// BADGES
+// ═══════════════════════════════════════════════════════
+const BADGE_DEFS=[
+  {id:'first_word',icon:'✍️',name:'First Word',desc:'Write anything in the studio'},
+  {id:'first_1k',icon:'📝',name:'1K Club',desc:'Write 1,000 words total'},
+  {id:'first_5k',icon:'📚',name:'5K Author',desc:'Write 5,000 words total'},
+  {id:'ten_k',icon:'🏅',name:'10K Milestone',desc:'Write 10,000 words total'},
+  {id:'twenty_five_k',icon:'⭐',name:'Quarter Done',desc:'Write 25,000 words total'},
+  {id:'fifty_k',icon:'🏆',name:'NaNoWriMo',desc:'Write 50,000 words total'},
+  {id:'first_pomo',icon:'⏱',name:'First Session',desc:'Complete your first Pomodoro'},
+  {id:'five_pomo',icon:'🍅',name:'Five & Counting',desc:'Complete 5 Pomodoros'},
+  {id:'twenty_pomo',icon:'🔥',name:'Focus Machine',desc:'Complete 20 Pomodoros'},
+  {id:'streak_3',icon:'💪',name:'Three-Day Streak',desc:'Write 3 days in a row'},
+  {id:'streak_7',icon:'🌟',name:'Week Warrior',desc:'Write 7 days in a row'},
+  {id:'streak_30',icon:'💎',name:'Month Master',desc:'Write 30 days in a row'},
+  {id:'first_chapter_done',icon:'📖',name:'Chapter Closed',desc:'Mark a chapter as Done'},
+  {id:'half_chapters',icon:'🎯',name:'Halfway Hero',desc:'Complete half your chapters'},
+  {id:'all_chapters',icon:'👑',name:'Manuscript Master',desc:'Complete all chapters'},
+  {id:'first_export',icon:'📤',name:'Safety Net',desc:'Export your first backup'},
+];
 
-  return (
-    <Modal title={person.name} onClose={onClose}>
-      <div style={{display:"flex", justifyContent:"space-between", marginBottom:20}}>
-        <div>
-          <div style={{fontSize:52}}>{combo.icon}</div>
-          <div style={{fontSize:24, fontWeight:800, color:combo.color}}>{combo.label}</div>
-        </div>
-        <button onClick={()=>{ onEdit(person); onClose(); }} style={{background:C.orange, color:"#fff", border:"none", padding:"10px 22px", borderRadius:10, fontWeight:700}}>✏ Edit</button>
-      </div>
+function checkBadges(){
+  const b=activeBook(); if(!b) return;
+  if(!state.badges) state.badges={};
+  const earned=id=>state.badges[id];
+  const earn=id=>{
+    if(!earned(id)){
+      state.badges[id]=Date.now();
+      const def=BADGE_DEFS.find(d=>d.id===id);
+      if(def) showToast(`🏆 Badge unlocked: ${def.name}!`,'success');
+    }
+  };
 
-      <div style={{marginBottom:24}}>
-        <div style={{display:"flex", justifyContent:"space-between", fontSize:14, marginBottom:8}}>
-          <span>Character Progress</span>
-          <span>{combo.progress}%</span>
-        </div>
-        <div className="progress-bar">
-          <div className="progress-fill" style={{width: `${combo.progress}%`, background: combo.progress > 80 ? "linear-gradient(90deg,#00b36b,#34d399)" : combo.progress > 50 ? "linear-gradient(90deg,#ff8c00,#ffaa00)" : "#dc3545"}} />
-        </div>
-        <div style={{fontSize:13, color:C.textMuted, marginTop:6}}>
-          Last updated: {person.lastUpdated ? new Date(person.lastUpdated).toLocaleDateString() : "Never"}
-        </div>
-      </div>
+  const total=b.chapters.reduce((s,c)=>s+c.wordsWritten,0);
+  if(total>0) earn('first_word');
+  if(total>=1000) earn('first_1k');
+  if(total>=5000) earn('first_5k');
+  if(total>=10000) earn('ten_k');
+  if(total>=25000) earn('twenty_five_k');
+  if(total>=50000) earn('fifty_k');
 
-      <div style={{display:"flex", borderBottom:"3px solid #ff8c00", marginBottom:20}}>
-        {["assess","develop","notes"].map(t => (
-          <button key={t} onClick={()=>setTab(t)} style={{flex:1, padding:"14px", fontWeight:700, background:tab===t?C.orange:"#f1f3f5", color:tab===t?"#fff":"#333", border:"none"}}>
-            {t==="assess"?"📊 Profile":t==="develop"?"🛠 Develop":"📝 Notes"}
-          </button>
-        ))}
-      </div>
+  const sessions=(b.sessions||[]).filter(s=>!s.isBreak);
+  if(sessions.length>=1) earn('first_pomo');
+  if(sessions.length>=5) earn('five_pomo');
+  if(sessions.length>=20) earn('twenty_pomo');
 
-      {tab==="assess" && Object.entries(person.scores).map(([k,v]) => {
-        const t = VIRTUES[k];
-        const showHas = v >= 2;
-        return (
-          <div key={k} style={{marginBottom:20, background:"#fff", border:`2px solid ${t.border}`, borderRadius:14, overflow:"hidden"}}>
-            <div style={{background:t.bg, padding:"16px 20px", display:"flex", alignItems:"center", gap:16}}>
-              <span style={{fontSize:42}}>{t.icon}</span>
-              <div style={{flex:1}}><div style={{fontSize:21, fontWeight:800, color:t.color}}>{t.label}</div></div>
-              <span style={{fontSize:18, fontWeight:700}}>{v}/3</span>
-            </div>
-            <div style={{padding:"20px"}}>
-              {(showHas ? t.strong : t.weak).map((s,i) => (
-                <div key={i} style={{marginBottom:6}}>{showHas?"→":"–"} {s}</div>
-              ))}
-            </div>
-          </div>
-        );
-      })}
+  const streak=calcStreak(b);
+  if(streak>=3) earn('streak_3');
+  if(streak>=7) earn('streak_7');
+  if(streak>=30) earn('streak_30');
 
-      {tab==="develop" && (
-        <div>
-          {Object.entries(person.scores).map(([k,v]) => {
-            const t = VIRTUES[k];
-            return (
-              <div key={k} style={{marginBottom:20, background:"#fff", border:`2px solid ${t.border}`, borderRadius:14, overflow:"hidden"}}>
-                <div style={{background:t.bg, padding:"14px 20px", display:"flex", alignItems:"center", gap:12}}>
-                  <span style={{fontSize:28}}>{t.icon}</span>
-                  <div style={{fontSize:18, fontWeight:800, color:t.color, flex:1}}>{t.label}</div>
-                  <span style={{fontSize:14, color:C.textMuted, background:"#fff", padding:"4px 10px", borderRadius:20, fontWeight:700}}>{SCORE_LABELS[v]}</span>
-                </div>
-                <div style={{padding:"16px 20px"}}>
-                  {t.develop.map((step,i) => (
-                    <div key={i} style={{display:"flex", gap:12, marginBottom:10, alignItems:"flex-start"}}>
-                      <span style={{background:C.orange, color:"#fff", borderRadius:"50%", width:22, height:22, display:"flex", alignItems:"center", justifyContent:"center", fontSize:12, fontWeight:800, flexShrink:0}}>{i+1}</span>
-                      <span style={{fontSize:14, color:C.text, lineHeight:1.5}}>{step}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
+  const doneChaps=b.chapters.filter(c=>c.status==='done').length;
+  if(doneChaps>=1) earn('first_chapter_done');
+  if(b.chapters.length>0&&doneChaps>=Math.ceil(b.chapters.length/2)) earn('half_chapters');
+  if(b.chapters.length>0&&doneChaps===b.chapters.length) earn('all_chapters');
 
-      {tab==="notes" && (
-        <div style={{background:"#fff", border:`1px solid ${C.border}`, borderRadius:12, padding:24, minHeight:200, whiteSpace:"pre-wrap", fontSize:15}}>
-          {person.notes || "No notes added yet."}
-        </div>
-      )}
-    </Modal>
-  );
+  saveState();
 }
 
-const BLANK_ATHLETE = { id:"", name:"", role:"", notes:"", scores:{L:1,P:1,S:1,G:1,H:1,Gr:1,J:1}, lastUpdated: null };
+function refreshBadges(){
+  const container=document.getElementById('badges-grid');
+  container.innerHTML=BADGE_DEFS.map(def=>{
+    const earned=!!(state.badges||{})[def.id];
+    const date=earned?new Date(state.badges[def.id]).toLocaleDateString():'';
+    return `<div class="badge ${earned?'earned':'locked'}">
+      <div class="badge-icon">${def.icon}</div>
+      <div><div class="badge-name">${def.name}</div>
+      <div class="badge-desc">${def.desc}${earned?`<br><span style="color:var(--gold);font-size:.65rem">${date}</span>`:''}</div></div>
+    </div>`;
+  }).join('');
+}
 
-// ─── MAIN APP ─────────────────────────────────────────────────────────────────
-function App() {
-  const [tab, setTab] = useState("athletes");
-  const [athletes, setAthletes] = useState(() => load("awaygame_athletes_v1", []));
-  const [editing, setEditing] = useState(null);
-  const [viewing, setViewing] = useState(null);
-  const [deleteConfirm, setDeleteConfirm] = useState(null);
+// ═══════════════════════════════════════════════════════
+// STREAK
+// ═══════════════════════════════════════════════════════
+function calcStreak(b){
+  const minGoal=b.dailyMin||30;
+  let streak=0;
+  const d=new Date();
+  // Check today separately — partial day counts
+  const todayMin=getTodayMinutes();
+  const today=dateStr(d);
+  if(todayMin>=minGoal) streak++;
+  // Go back from yesterday
+  for(let i=1;i<=365;i++){
+    const nd=new Date(d); nd.setDate(nd.getDate()-i);
+    const ds=dateStr(nd);
+    const dayMin=(b.sessions||[]).filter(s=>s.date===ds).reduce((s,x)=>s+x.minutes,0);
+    if(dayMin>=minGoal) streak++;
+    else break;
+  }
+  return streak;
+}
 
-  function saveAthlete(p) {
-    const updated = {...p, id: p.id || uid(), lastUpdated: Date.now()};
-    const next = p.id ? athletes.map(x => x.id === p.id ? updated : x) : [...athletes, updated];
-    setAthletes(next);
-    save("awaygame_athletes_v1", next);
-    setEditing(null);
+function updateStreakDisplay(){
+  const b=activeBook();
+  const streak=b?calcStreak(b):0;
+  document.getElementById('streak-display').textContent=streak;
+}
+
+function updateTodayTimer(){ refreshDashboard(); updateStreakDisplay(); }
+
+// ═══════════════════════════════════════════════════════
+// SETTINGS
+// ═══════════════════════════════════════════════════════
+function loadSettings(){
+  const s=state.settings||{};
+  document.getElementById('set-work-min').value=s.workMin||25;
+  document.getElementById('set-break-min').value=s.breakMin||5;
+  document.getElementById('set-long-break-every').value=s.longBreakEvery??4;
+  document.getElementById('set-long-break-min').value=s.longBreakMin||15;
+  document.getElementById('set-tick').checked=s.tick!==false;
+  document.getElementById('set-autobreak').checked=s.autoBreak||false;
+}
+
+function saveSettings(){
+  state.settings={
+    workMin:parseInt(document.getElementById('set-work-min').value)||25,
+    breakMin:parseInt(document.getElementById('set-break-min').value)||5,
+    longBreakEvery:parseInt(document.getElementById('set-long-break-every').value)||4,
+    longBreakMin:parseInt(document.getElementById('set-long-break-min').value)||15,
+    tick:document.getElementById('set-tick').checked,
+    autoBreak:document.getElementById('set-autobreak').checked,
+    theme:state.settings?.theme||'dark'
+  };
+  saveState();
+  showToast('Settings saved','success');
+}
+
+// ═══════════════════════════════════════════════════════
+// THEME
+// ═══════════════════════════════════════════════════════
+function applyTheme(){
+  document.body.classList.toggle('light', state.settings?.theme==='light');
+  document.getElementById('theme-btn').textContent=state.settings?.theme==='light'?'🌙':'☀️';
+}
+
+function toggleTheme(){
+  if(!state.settings) state.settings={};
+  state.settings.theme=state.settings.theme==='light'?'dark':'light';
+  applyTheme(); saveState();
+}
+
+// ═══════════════════════════════════════════════════════
+// EXPORT / IMPORT
+// ═══════════════════════════════════════════════════════
+function exportAllData(){
+  const payload={
+    _version: 2,
+    _exported: new Date().toISOString(),
+    _app: 'FocusScript',
+    state: state
+  };
+  const json=JSON.stringify(payload, null, 2);
+  downloadText(json, `FocusScript_Backup_${nowStr()}.json`, 'application/json');
+  if(!state.badges) state.badges={};
+  state.badges['first_export']=state.badges['first_export']||Date.now();
+  saveState();
+  showToast('Backup downloaded! Store it somewhere safe.','success');
+  closeModal('modal-exportimport');
+}
+
+function triggerImport(){
+  document.getElementById('import-file').click();
+}
+
+function importData(event){
+  const file=event.target.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const payload=JSON.parse(e.target.result);
+      if(!payload._app||payload._app!=='FocusScript') throw new Error('Not a FocusScript backup');
+      const imported=payload.state;
+      // Merge: add books that don't exist, keep existing
+      (imported.books||[]).forEach(book=>{
+        if(!state.books.find(b=>b.id===book.id)) state.books.push(book);
+      });
+      // Merge settings, badges, sessions
+      if(imported.settings) state.settings=Object.assign(state.settings||{},imported.settings);
+      if(imported.badges) state.badges=Object.assign(state.badges||{},imported.badges);
+      if(!state.activeBookId&&state.books.length>0) state.activeBookId=state.books[0].id;
+      saveState();
+      buildBookSelect();
+      refreshAllPages();
+      applyTheme();
+      showToast(`Backup imported! ${(imported.books||[]).length} book(s) merged.`,'success');
+      closeModal('modal-exportimport');
+    }catch(err){
+      showToast('Import failed: '+err.message,'error');
+    }
+  };
+  reader.readAsText(file);
+  event.target.value='';
+}
+
+function downloadText(text, filename, type){
+  const blob=new Blob([text],{type});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.download=filename; a.click();
+  URL.revokeObjectURL(url);
+}
+
+function confirmReset(){ openModal('modal-reset'); }
+
+function resetAllData(){
+  localStorage.removeItem(LS_KEY);
+  location.reload();
+}
+
+function requestNotifPerms(){
+  if('Notification' in window){
+    Notification.requestPermission().then(p=>{
+      showToast(p==='granted'?'Notifications enabled!':'Permission denied','success');
+    });
+  } else { showToast('Notifications not supported in this browser','warning'); }
+}
+
+// ═══════════════════════════════════════════════════════
+// MODALS
+// ═══════════════════════════════════════════════════════
+function openModal(id){ document.getElementById(id).classList.add('open'); }
+function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+function openExportImport(){ openModal('modal-exportimport'); }
+
+document.querySelectorAll('.modal-overlay').forEach(el=>{
+  el.addEventListener('click',e=>{ if(e.target===el) el.classList.remove('open'); });
+});
+
+// ═══════════════════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════════════════
+function showToast(msg, type='success'){
+  const container=document.getElementById('toast-container');
+  const el=document.createElement('div');
+  el.className=`toast ${type}`;
+  el.textContent=msg;
+  container.appendChild(el);
+  setTimeout(()=>{ el.style.opacity='0'; el.style.transition='opacity .4s'; setTimeout(()=>el.remove(),400); },3500);
+}
+
+// ═══════════════════════════════════════════════════════
+// SIDEBAR MOBILE
+// ═══════════════════════════════════════════════════════
+function toggleSidebar(){
+  const sb=document.getElementById('sidebar');
+  const ov=document.getElementById('overlay-bg');
+  sb.classList.toggle('open');
+  ov.classList.toggle('show');
+}
+function closeSidebar(){
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('overlay-bg').classList.remove('show');
+}
+
+// ═══════════════════════════════════════════════════════
+// BOOTSTRAP
+// ═══════════════════════════════════════════════════════
+(function boot(){
+  loadState();
+
+  if(state.books.length===0){
+    // First launch — show onboarding
+    document.getElementById('onboarding').classList.add('show');
+    initOnboarding();
+  } else {
+    if(!state.activeBookId) state.activeBookId=state.books[0].id;
+    document.getElementById('app').style.display='flex';
+    initApp();
   }
 
-  function deleteAthlete(id) {
-    const next = athletes.filter(a => a.id !== id);
-    setAthletes(next);
-    save("awaygame_athletes_v1", next);
-    setDeleteConfirm(null);
-    if (viewing && viewing.id === id) setViewing(null);
-  }
-
-  const teamStats = calculateTeamProgress(athletes);
-
-  return (
-    <div style={{minHeight:"100vh", background:"#f8f9fa"}}>
-      {/* HEADER */}
-      <div style={{background:"#fff", borderBottom:"4px solid #ff8c00", padding:"0 24px", height:76, display:"flex", alignItems:"center", justifyContent:"space-between", boxShadow:"0 3px 12px rgba(0,0,0,0.1)"}}>
-        <div>
-          <div style={{fontFamily:"'Barlow Condensed',sans-serif", fontWeight:900, fontSize:32, letterSpacing:1.5, color:C.orange}}>AWAY GAME</div>
-          <div style={{fontSize:13, color:"#555"}}>Christian Parent’s Playbook</div>
-        </div>
-        <div style={{display:"flex", gap:8}}>
-          <button onClick={()=>setTab("athletes")} style={{padding:"10px 22px", borderRadius:10, background:tab==="athletes"?C.orange:"#fff", color:tab==="athletes"?"#fff":"#333", fontWeight:700, border:"2px solid #ff8c00"}}>👥 My Athletes</button>
-          <button onClick={()=>setTab("playbook")} style={{padding:"10px 22px", borderRadius:10, background:tab==="playbook"?C.orange:"#fff", color:tab==="playbook"?"#fff":"#333", fontWeight:700, border:"2px solid #ff8c00"}}>📖 The Playbook</button>
-        </div>
-      </div>
-
-      {tab === "athletes" && (
-        <div style={{padding:24}}>
-          {/* TEAM PROGRESS DASHBOARD */}
-          {athletes.length > 0 && (
-            <div className="team-card" style={{marginBottom:32}}>
-              <div style={{fontSize:20, fontWeight:800, marginBottom:16, color:C.orange}}>Team Progress Overview</div>
-              <div style={{display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(180px, 1fr))", gap:20}}>
-                <div>
-                  <div style={{fontSize:13, color:C.textMuted}}>Team Average Score</div>
-                  <div style={{fontSize:32, fontWeight:800, color:C.orange}}>{teamStats.avgScore}</div>
-                  <div style={{fontSize:13}}>out of 3.0</div>
-                </div>
-                <div>
-                  <div style={{fontSize:13, color:C.textMuted}}>Strong Virtues</div>
-                  <div style={{fontSize:32, fontWeight:800, color: teamStats.strongPercent > 70 ? C.green : C.orange}}>{teamStats.strongPercent}%</div>
-                </div>
-                <div>
-                  <div style={{fontSize:13, color:C.textMuted}}>Athletes Tracked</div>
-                  <div style={{fontSize:32, fontWeight:800}}>{teamStats.totalAthletes}</div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:28}}>
-            <h1 style={{fontSize:28, fontWeight:800}}>My Athletes</h1>
-            <button onClick={()=>setEditing(BLANK_ATHLETE)} style={{background:C.orange, color:"#fff", border:"none", padding:"12px 28px", borderRadius:12, fontWeight:700}}>＋ Add Athlete</button>
-          </div>
-
-          {athletes.length === 0 ? (
-            <div style={{textAlign:"center", padding:"120px 20px", color:"#666"}}>
-              <div style={{fontSize:80}}>⚽️🏀🏈</div>
-              <div style={{fontSize:24, margin:"20px 0"}}>Start building your team’s character</div>
-              <button onClick={()=>setEditing(BLANK_ATHLETE)} style={{background:C.orange, color:"#fff", padding:"14px 36px", borderRadius:12, fontSize:17, fontWeight:700}}>Add Your First Athlete</button>
-            </div>
-          ) : (
-            <div style={{display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(310px, 1fr))", gap:20}}>
-              {athletes.map(p => {
-                const combo = getCombo(p.scores);
-                return (
-                  <div key={p.id} style={{background:"#fff", border:`1px solid ${C.border}`, borderRadius:16, padding:22, boxShadow:"0 6px 20px rgba(0,0,0,0.07)", position:"relative"}}>
-                    <button 
-                      onClick={(e)=>{e.stopPropagation(); setDeleteConfirm(p);}} 
-                      className="delete-btn" 
-                      style={{position:"absolute", top:12, right:12}}
-                    >
-                      🗑
-                    </button>
-                    
-                    <div onClick={()=>setViewing(p)} style={{cursor:"pointer"}}>
-                      <div style={{fontSize:22, fontWeight:800, marginBottom:8}}>{p.name}</div>
-                      {p.role && <div style={{color:C.textSub, marginBottom:12}}>{p.role}</div>}
-                      
-                      <div style={{display:"flex", gap:8, flexWrap:"wrap", marginBottom:16}}>
-                        {Object.entries(p.scores).map(([k,v]) => (
-                          <div key={k} style={{background:VIRTUES[k].bg, padding:"6px 10px", borderRadius:8, fontSize:14}}>{VIRTUES[k].icon} {v}</div>
-                        ))}
-                      </div>
-
-                      <div style={{marginBottom:12}}>
-                        <div className="progress-bar">
-                          <div className="progress-fill" style={{width: `${combo.progress}%`, background: combo.progress > 80 ? "linear-gradient(90deg,#00b36b,#34d399)" : combo.progress > 50 ? "linear-gradient(90deg,#ff8c00,#ffaa00)" : "#dc3545"}} />
-                        </div>
-                      </div>
-
-                      <div style={{fontSize:13, color:C.textMuted}}>Last updated: {p.lastUpdated ? new Date(p.lastUpdated).toLocaleDateString() : "Never"}</div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      )}
-
-      {tab === "playbook" && (
-        <div style={{padding:24, maxWidth:820, margin:"0 auto"}}>
-          <h2 style={{color:C.orange, marginBottom:8}}>The Seven Virtues</h2>
-          <p style={{color:C.textSub, marginBottom:32}}>Fruit of the Spirit applied to youth sports.</p>
-          {Object.values(VIRTUES).map(t => (
-            <div key={t.key} style={{marginBottom:24, background:"#fff", border:`1px solid ${t.border}`, borderRadius:16, padding:24}}>
-              <div style={{display:"flex", alignItems:"center", gap:16}}>
-                <span style={{fontSize:48}}>{t.icon}</span>
-                <div>
-                  <div style={{fontSize:22, fontWeight:800, color:t.color}}>{t.label}</div>
-                  <div style={{color:C.textSub}}>"{t.tagline}"</div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {editing && <EditModal person={editing} onSave={saveAthlete} onClose={()=>setEditing(null)} />}
-      {viewing && <PersonDetail person={viewing} onClose={()=>setViewing(null)} onEdit={p=>{setViewing(null); setEditing(p);}} />}
-      {deleteConfirm && <ConfirmDelete name={deleteConfirm.name} onConfirm={()=>deleteAthlete(deleteConfirm.id)} onCancel={()=>setDeleteConfirm(null)} />}
-    </div>
-  );
-}
-
-const root = ReactDOM.createRoot(document.getElementById("root"));
-root.render(React.createElement(App));
+  // Resize handler for charts
+  window.addEventListener('resize',()=>{
+    const page=document.querySelector('.page.active');
+    if(page&&page.id==='page-analytics') refreshAnalytics();
+  });
+})();
 </script>
 </body>
 </html>
